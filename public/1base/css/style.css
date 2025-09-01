@@ -1,0 +1,412 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+.background-container {
+    /* La imagen de fondo se establece aquí desde el XML */
+    height: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    
+    /* Centramos el contenido con Flexbox */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Layout de 3 columnas lógicas: izquierda (texto), centro (login), derecha (espaciador) */
+.layout-container {
+    display: flex;
+    align-items: center;       /* alinea verticalmente login y texto */
+    justify-content: center;   /* punto de partida centrado */
+    gap: 32px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+    position: relative;        /* para que el selector de idioma absoluto se ancle aquí si quieres */
+}
+
+/* Espaciador simétrico a la derecha para que el login quede exactamente en el centro */
+.layout-container::after {
+    content: "";
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* Columna izquierda para texto largo */
+.left-box {
+    flex: 1 1 0;       /* ocupa el espacio disponible a la izquierda */
+    min-width: 200px;  /* evita que desaparezca en pantallas medianas */
+    max-width: 600px;  /* límite razonable para legibilidad */
+    padding: 2px;
+    color: #fff;
+    overflow: auto;    /* por si el texto es muy largo */
+    background: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+}
+
+/* Caja de login: igual que antes, pero sin forzar 500px que descentraba */
+.login-box {
+    background: rgba(0, 0, 0, 0.75);
+    padding: 40px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    flex: 0 1 400px; /* base 400, permite encoger si hace falta; no empuja el centro */
+}
+
+
+.login-box h1 {
+    font-size: 2em;
+    margin-top: 0;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #555;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border: 1px solid #555;
+    background: #333;
+    color: white;
+    border-radius: 5px;
+    box-sizing: border-box; /* Crucial para el padding */
+    font-size: 1em;
+}
+
+.login-box button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: red;
+    color: white;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-box button:hover {
+    background-color: #005a9e;
+}
+
+.language-selector {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+    display: flex; /* Para alinear los elementos */
+    align-items: center;
+    padding: 10px;
+    background-color:black;
+}
+.language-selector a {
+    text-decoration: none;
+    margin-left: 10px;
+    display: inline-block;
+}
+.language-selector img {
+    width: 32px; /* Tamaño de la bandera */
+    height: auto;
+    border-radius: 3px; /* Bordes redondeados sutiles */
+    opacity: 0.7;
+    transition: opacity 0.3s, transform 0.3s;
+}
+.language-selector img:hover {
+    opacity: 1;
+    transform: scale(1.1); /* Efecto de zoom al pasar el ratón */
+}
+.language-selector span {
+    color: white;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* ==========================================================================
+   Estilos Globales y Layout de la Aplicación (Dashboard)
+   ========================================================================== */
+
+/* Reseteo básico y configuración de la caja de modelo */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #f1f1f1; /* Un blanco un poco más suave */
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* --- Barra Lateral (Sidebar) --- */
+
+.sidebar {
+    width: 260px;
+    flex-shrink: 0; /* Evita que la barra lateral se encoja */
+    background: rgba(10, 25, 41, 0.9); /* Un azul oscuro casi negro con transparencia */
+    backdrop-filter: blur(10px); /* Efecto de desenfoque del fondo */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header {
+    text-align: center;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.8em;
+    color: #ffffff;
+    font-weight: 300; /* Fuente más fina */
+}
+
+.main-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1; /* Empuja el user-info hacia abajo */
+}
+
+.main-menu li {
+    margin-bottom: 8px;
+}
+
+.main-menu a {
+    display: block;
+    font-size: 15px;
+    padding: 6px 15px;
+    color: #a9b7c6; /* Un gris azulado claro */
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.main-menu a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.main-menu .language-selector{
+    position:relative; 
+    background-color: rgba(0,0,0,0); 
+    padding:0; 
+    width: fit-content; 
+    margin:auto;
+    text-align: center;
+}
+
+.user-info {
+    margin-top: auto; /* Empuja este bloque al fondo de la sidebar */
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9em;
+}
+
+.user-info p {
+    margin: 0 0 10px 0;
+}
+
+.user-info a {
+    color: #ff5555; /* Un rojo para la acción de "Cerrar Sesión" */
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.user-info a:hover {
+    text-decoration: underline;
+}
+
+
+/* --- Contenido Principal (Main Content) --- */
+
+.main-content {
+    flex-grow: 1;
+    padding: 40px;
+    background: rgba(0, 0, 0, 0.6);
+    overflow-y: auto; /* Añade scroll si el contenido es más largo que la pantalla */
+    background-repeat: no-repeat; /* evita que se repita */
+    background-position: center center; /* centra horizontal y verticalmente */
+    background-size: cover; /* ajusta la imagen para cubrir todo el contenedor */
+}
+
+.main-content h1 {
+    font-size: 2.5em;
+    margin-top: 0;
+    font-weight: 300;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.main-content p {
+    font-size: 1.1em;
+    max-width: 800px; /* Mejora la legibilidad */
+}
+
+p.views-layer-message{
+    position: absolute;
+    width: 40vw;
+    bottom: 0;
+    left: 0;
+    margin-left: 23vw;
+    margin-bottom: 2vh;
+    font-size: 1.2vw; 
+    color: green;
+    padding: 1vw;
+}
+
+.dashboard-vw-message{
+    background-color: black;
+    width: fit-content;
+    padding: 0.5em;
+}
+
+/* --- Estilos para el Configurador --- */
+.configurator-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 8px;
+}
+.step {
+    padding: 10px 20px;
+    color: #888;
+    border-bottom: 3px solid transparent;
+}
+.step.active {
+    color: #fff;
+    font-weight: bold;
+    border-bottom-color: #0078d4;
+}
+
+.spa-content {
+    min-height: 400px; /* Para que el layout no se colapse */
+    padding: 20px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+}
+
+.configurator-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+.price-display {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+.configurator-summary button {
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+/* CONFIGURATOR */
+.model-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+.model-card { border: 2px solid #555; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; }
+.model-card:hover { transform: translateY(-5px); border-color: #0078d4; }
+.model-card.selected { border-color: #00A859; background: rgba(0, 168, 89, 0.2); transform: scale(1.05); }
+.model-card img { max-width: 100%; height: auto; border-top-left-radius: 6px; border-top-right-radius: 6px; }
+.step-actions { text-align: right; margin-top: 20px; }
+.step-actions button:disabled { background-color: #555; cursor: not-allowed; }
+
+
+/* --- Estilos para los botones de acción del configurador --- */
+.step-actions {
+    display: flex;
+    justify-content: flex-end; /* Alinea los botones a la derecha */
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.step-actions button {
+    padding: 12px 25px;
+    font-size: 1em;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-color: #0078d4;
+    color: white;
+}
+
+.step-actions button:hover:not(:disabled) {
+    background-color: #005a9e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.step-actions button:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* Para cuando hay un botón de "Volver" */
+.step-actions {
+    gap: 15px; /* Espacio entre botones */
+}
+.step-actions .back-button {
+    background-color: #6c757d; /* Un color gris */
+}
+.step-actions .back-button:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+.color-selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+.color-card { border: 2px solid #555; border-radius: 8px; cursor: pointer; transition: all 0.3s; overflow: hidden; }
+.color-card:hover { transform: translateY(-5px); border-color: #0078d4; }
+.color-card.selected { border-color: #00A859; background: rgba(0, 168, 89, 0.2); transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 168, 89, 0.5); }
+.color-card img { width: 100%; height: 120px; object-fit: cover; }
+.color-card .color-info { padding: 10px; }
+.color-card h4 { margin: 0 0 5px 0; font-size: 1em; }
+.color-card p { margin: 0; font-size: 0.9em; color: #ccc; }
+
+.extras-list { display: flex; flex-direction: column; gap: 15px; }
+.extra-item { display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; }
+.extra-item input[type="checkbox"] { width: 20px; height: 20px; margin-right: 15px; flex-shrink: 0; }
+.extra-item label { display: flex; flex-direction: column; cursor: pointer; }
+.extra-item label strong { font-size: 1.1em; }
+.extra-item label small { font-size: 0.9em; color: #ccc; margin-top: 5px; }

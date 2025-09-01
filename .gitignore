@@ -1,0 +1,7 @@
+listar_contenido.php
+log_debug.md
+log_proceso.md
+phpinfo.txt
+test.php
+cache/*
+!cache/.gitkeep
