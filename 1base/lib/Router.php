@@ -31,11 +31,11 @@ class Router
             '/.well-known/appspecific/com.chrome.devtools.json',
         ];
 
-        // Si la petición es para una de estas rutas, la cortamos de raíz.
+        // If the request is for one of these routes, we cut it from the root.
         if (in_array($path, $ignoredPaths)) {
-            // Enviamos una respuesta 404 Not Found para ser correctos.
+            // We send an answer 404 Not Found to be correct.
             http_response_code(404); 
-            // Terminamos el script. No se ejecutará nada más. No habrá logs de la App.
+            // We finish the script. Nothing else will be executed. There will be no app.
             exit(); 
         }
 

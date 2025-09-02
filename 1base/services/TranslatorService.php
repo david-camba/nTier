@@ -8,7 +8,8 @@ require_once '1base/services/Service.php';
  * Carga un archivo de idioma y proporciona un método para obtener
  * las cadenas de texto traducidas.
  */
-class TranslatorService_Base extends Service
+interface TranslatorService{}
+class TranslatorService_Base extends Service implements TranslatorService
 {
 
     protected $app;
@@ -61,7 +62,6 @@ class TranslatorService_Base extends Service
         $mergedTranslations = [];
         
         // 1. Obtenemos las capas a las que accede el usuario actual
-        //$totalLevels = count($this->app->getConfig('hierarchy'));
         $totalLayers = $this->app->getUserLayer();        
 
         // 2. Iteramos desde el nivel más bajo (1, base) hasta el más alto.

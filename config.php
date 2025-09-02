@@ -13,10 +13,7 @@ return [
         // we can include this to add N new types of components with a specific purposes
     ],
 
-    // Priority order, from audi to base
-    'hierarchy' => ['audi', 'vwgroup', 'base'],
-
-    // Layers map, to find classes and instance them
+    // Layers map and priority order, to find classes and instance them
     'layers' => [
         'audi' => [
             'directory' => '3audi',          // Directory
@@ -35,7 +32,6 @@ return [
         ]
     ],
     /* NOTE: we could simplify to numbers and add N layers and levels of functionalities and show them regarding the level of the user (for premium packages, for example)    
-    'hierarchy' => ['4level', '3level', '2level', '1level']
         
     'layers' => [
         'level4' => [

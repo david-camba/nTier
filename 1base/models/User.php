@@ -1,7 +1,9 @@
 <?php
 require_once '1base/models/ORM.php';
 
-class User_Base extends ORM
+interface User {}; 
+
+class User_Base extends ORM implements User
 {
     protected $tableName = 'users';
     protected $primaryKey = 'id_user';
@@ -65,7 +67,7 @@ class User_Base extends ORM
      *
      * @return int|null
      */
-    public function fetchUserLayer()
+    public function fetchUserLayer() : ?int
     {
         if (!$this->id_user) return null;
 
@@ -85,7 +87,7 @@ class User_Base extends ORM
      *
      * @return int|null
      */
-    public function fetchUserLevel()
+    public function fetchUserLevel() : ?int
     {
         if (!$this->id_user) return null;
 

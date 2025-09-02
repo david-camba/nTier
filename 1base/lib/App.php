@@ -1,57 +1,58 @@
-
-
 <?php
-// Incluimos la dependencia del Router, ya que run() la necesita.
 require_once 'lib/Router.php';
 
-/**
- * Clase App
- *
- * El núcleo de la aplicación. Actúa como una "super fábrica" para crear
- * componentes (controladores, modelos, etc.) y como el orquestador
- * principal que gestiona el ciclo de vida de una petición HTTP.
- */
+/** 
+* App class 
+* 
+* The core of the application: Service Locator 
+* Act to create components (controllers, models, etc.) and as the orchestrador 
+* Main that manages the life cycle of an HTTP request. 
+*/
 class App
 {
     /**
-     * Almacena la configuración completa de la aplicación cargada desde config.php.
+     * Store the complete configuration of the application loaded from Config.php.
      * @var array
      */
-    private $config;
-    private $context = [];
+    private array $config;
+
+    /**
+     * Store the user context. It's set by the AuthService
+     * @var array
+     */
+    private array $context;
+
     private $userLayer = null; //control access to the 3 layers (vertical layers)
     private $userLevel = null; //control access to user role capabilities (horizontal layers)
 
     private $translatorService = null; // Un caché para la instancia
     private $modelFactory = null; //guardamos la fábrica la primera vez que se genera para cachear las conexiones con bases de datos
 
-    //private $isApiRoute = false; // Nueva propiedad para recordar el tipo de ruta.
-
+    //private $isApiRoute = false; // New property to remember the type of route.
     /**
-     * El constructor recibe la configuración y la almacena.
-     * @param array $config La configuración de la aplicación.
+     * The builder stores the configuration
+     * @param array $config Application configuration.
      */
     public function __construct(array $config)
     {
         $this->config = $config;
     }
 
-    /**
-     * El método principal que ejecuta la aplicación.
-     * Orquesta el enrutamiento, la seguridad de sesión y la ejecución
-     * del controlador o script correspondiente.
-     */
+    /** 
+    * The main method that executes the application. 
+    * Orchestra the routing, session security and execution 
+    * of the corresponding controller or script. 
+    */
     public function run()
     {
         try {
             $this->prepareDebugging();
-            // 1. Obtener el plan de acción del Router.
+            // 1. Obtain the router's action plan.
             $router = new Router();
             $requestedRouteInfo = $router->getRouteInfo();   
 
-            // 2. Aplicar la lógica de seguridad de sesión.
-            $authService = $this->getService('Auth');
-            $finalRouteInfo = $authService->authenticateRequest($requestedRouteInfo);
+            // 2. Apply the session security logic.
+            $finalRouteInfo = $this->getService('Auth')->authenticateRequest($requestedRouteInfo);
 
             debug("Peticion controller - routeInfo",$finalRouteInfo,false);
 
@@ -60,44 +61,42 @@ class App
                 $this->isApiRoute = true;
             }*/
             
-            // 3. Decidir qué hacer basándose en el tipo de ruta.
+            // 3. Decide what to do based on the type of route.
             switch ($finalRouteInfo['type']) {
                 case 'mvc_action':
-                    // Si es una ruta moderna, ejecutamos el flujo MVC.
-                    /*$controller = $this->getController($routeInfo['controller']);
-                    $response = $controller->{$routeInfo['action']}(...$routeInfo['params']);*/
+                    // If it is a modern route, we execute the MVC flow.
 
-                    // 1. Obtenemos el objeto Response preparado por el dispatcher.
+                    // 1. We obtain the Responsible object prepared by the Dispatcher.
                     $response = $this->dispatchAction($finalRouteInfo);
 
-                    // 2. Aquí podríamos aplicar middlewares a la respuesta
+                    // 2. Here we could apply Middlewares to the answer
                     $this->debugResponse($response);
 
                     $this->sendResponse($response);
                     break;
 
                 case 'legacy_script':
-                    // Si es una ruta legacy, ejecutamos el script.
+                    // If it is a legacy route, we execute the script.
                     $scriptPath = __DIR__ . '/../' . $finalRouteInfo['script_path'];
                     
-                    // Verificamos que el archivo existe en esa ubicación fija.
+                    // We verify that the file exists in that fixed location.
                     if (file_exists($scriptPath)) {
-                        // 3. Lo ejecutamos.
+                        // 3. We execute it.
                         require_once $scriptPath;
                     } else {
-                        // Si el script no existe, es un error 404.
+                        // If the script does not exist, it is a 404 error.
                         throw new Exception("Script legacy no encontrado: {$routeInfo['script_name']}", 404);
                     }
                     break;
 
                 default:
-                    // Si el Router devuelve un tipo desconocido, es un error interno.
+                    // If the Router returns an unknown, it is an internal error.
                     throw new Exception("Tipo de ruta desconocido: '{$routeInfo['type']}'", 500);      
             }
             exit();
         } catch (Throwable $e) {
-            // Captura cualquier error o excepción que ocurra durante la ejecución
-            // y lo pasa a nuestro manejador de errores central.
+            // Captures any error or exception that occurs during execution
+            // And it passes it to our central error handler.
             //$this->handleError($e);
             error_log($e);
         }
@@ -105,7 +104,7 @@ class App
 
     public function setUserLayer($userLayer)
     {
-        //Solo la layer una vez
+        //Only set the layer once
         if ($this->userLayer !== null) {
             return;
         }
@@ -118,7 +117,7 @@ class App
 
     public function setUserLevel($userLevel)
     {
-        //Solo se fija el level una vez
+        //Only set the level once
         if ($this->userLevel !== null) {
             return;
         }
@@ -139,51 +138,49 @@ class App
         return $this->context[$key] ?? $default;
     }
 
-    /**
- * El nuevo "dispatcher" inteligente.
- * Encuentra y ejecuta la implementación de controlador/acción más específica
- * basándose en la capa vertical y el rol horizontal del usuario.
- */
-private function dispatchAction(array $routeInfo)
-{
+    /** 
+    * The new intelligent "dispatcher". 
+    * Find and execute the most specific controller/action implementation 
+    * Based on the vertical layer and the horizontal role of the user. 
+    */
+    private function dispatchAction(array $routeInfo) : Response
+    {
     $controllerName = $routeInfo['controller'];
     $actionName = $routeInfo['action'];
     $params = $routeInfo['params'];
     $userLevel = $this->getUserLevel();
     
-    // 1. Determinar el sufijo del rol del usuario (si lo tiene).
+    // 1. Determine the user's role suffix (if you have it).
     $roleSuffix = ($userLevel != 0 && ($role = $this->getConfig(['user_roles', $userLevel])) !== null)
         ? $role
         : '';
 
-    // 2. INTENTO A: Buscar un Controlador especializado para el rol.
+    // 2. I try to: look for a specialized controller for the role
+    // This is useful to create specific functionalities for roles, like "Emissions_Manager.php".
+    // Only managers will be able to access this specific controller.
     $specializedControllerName = "{$controllerName}_{$roleSuffix}";
     try {
-        // Intentamos obtener el controlador con el sufijo del rol.
-        $controller = $this->getController($specializedControllerName);
-        
-        // Si tiene éxito, lo usamos. No necesitamos comprobar el método.
-        // Asumimos que si existe un AuthControllerManager, tiene un método showLogin.
+        // We try to obtain the controller with the suffix of the role.
+        $controller = $this->getController($specializedControllerName);        
+        // If we succeed, we use it. We do not need to check the method.
         return $controller->{$actionName}(...$params);
-
     } catch (Exception $e) {
-        // No pasa nada. Significa que el controlador especializado no existe.
-        // Continuamos al siguiente intento.
+        // No problem. It means that the specialized controller does not exist.
     }
 
-    // 3. INTENTO B: Usar el Controlador normal, pero buscar el Método especializado del rol del usuario.    
+    // 3. I try B: Use the normal controller, but look for the specialized method of the user's role.  
     $controller = $this->getController($controllerName);
     $specializedActionName = "{$actionName}_{$roleSuffix}";
 
     
     if ($roleSuffix && method_exists($controller, $specializedActionName)) {
-        // ¡Encontramos un método especializado! Lo ejecutamos.
+        // We find a specialized method! We execute it.
         $response = $controller->{$specializedActionName}(...$params);
         return $response;
     }
-    // Si el controllador tiene la propiedad fallbackRole = true, busco en bucle hacia abajo
+    // If the controller has the property fallbackRole = true, I'm looking for a fallback of the levels below
 
-    // 4. INTENTO C: Usar el Controlador normal, pero buscar un Método especializado de roles de usuarios con menores privilegios    
+    // 4. I try C: Use the normal controller, but look for a specialized method of roles of users with lower privileges   
     if($controller->useUserLevelFallback()){
         $fallbackLevel = $userLevel - 1;
         while($fallbackLevel > 0){
@@ -200,17 +197,17 @@ private function dispatchAction(array $routeInfo)
     }
 
 
-    // 5. FALLBACK: Usar el Controlador y el Método normales.
+    // 5. Fallback: Use the normal controller and method.
     if (method_exists($controller, $actionName)) {
         return $controller->{$actionName}(...$params);        
     }
     
-    // 5. Si nada de lo anterior funciona, es un 404.
+    // 6. If none of the above works, it is a 404.
     throw new Exception("Acción no encontrada para la ruta: {$controllerName}->{$actionName}", 404);
     }
 
     
-    public function getModel($modelName, array $constructorArgs=[], $userLayer = null, $cache = false)
+    public function getModel(string $modelName, array $constructorArgs=[], ?int $userLayer = null, bool $cache = false) : ORM
     {
         $connectionType = $this->getConfig(['model_connections',$modelName]);           
 
@@ -245,21 +242,21 @@ private function dispatchAction(array $routeInfo)
      * Inyecta automáticamente la App en el constructor. 
      * Nunca recibe argumentos aparte de "App", los parámetros recibidos se gestionan desde el método llamado, no desde la función
      */
-    public function getController($controllerName) {
+    public function getController(string $controllerName) {
         return $this->getComponent('controller', $controllerName, [$this]);
     }
 
 
      /**
-     * El método "fábrica" principal.
-     * Crea y devuelve una instancia de cualquier componente jerárquico.
+     * The main "factory" method.
+     * Create and return an instance of any hierarchical component.
      *
-     * @param string $type El tipo de componente ('controller', 'model', etc.).
-     * @param string $name El nombre base del componente ('AuthController').
-     * @param array $constructorArgs Los argumentos de entrada del constructor se pasarán en un array.
-     * @return object La instancia del objeto solicitado.
+     * @param string $type The type of component ('Controller', 'Model', etc.).
+     * @param string $name The base name of the component ('Auth Controller').
+     * @param array $constructorArgs The builder's entry arguments will be passed in an array.
+     * @return object The instance of the requested object.
      */
-    public function getComponent($type, $name, $constructorArgs = [], $userLayer = null, $exactLayerOnly = false)
+    public function getComponent(string $type, string $name, array $constructorArgs = [], ?int $userLayer = null, bool $exactLayerOnly = false) : object
     {
         // 1. Encontrar la información del archivo y la capa.
         $componentInfo = $this->findFile($type, $name, $userLayer, $exactLayerOnly);
@@ -290,30 +287,29 @@ private function dispatchAction(array $routeInfo)
     }
 
     /**
-     * Es un parent::callingMethod() dinámico que facilita la sintaxis
-     * Ejecuta el mismo método del objeto en la clase padre y devuelve su respuesta.
-     * Detecta automáticamente el nombre del método que lo llamó y ajusta los argumentos según el padre.
-     * @param object $callerObject Recibe el objeto que la llama para poder ejecutar el método manteniendo el estado
-     * @return mixed La respuesta del método padre del Controller, Service, Model...
+     * It is a parent :: calling method () dynamic that facilitates syntax
+     * Execute the same method of the object in the father class and return your answer.
+     * Automatically detects the name of the method that called it and adjusts the arguments according to the father.
+     * @param object $callerObject Receive the object that calls it to be able to execute the method maintaining the State
+     * @return mixed The response of the Padre del Controller method, Service, Model ...
      */
     public function callParent(object $callerObject) : mixed
     {
-        // 1. Detectar el método y la clase que nos llamó
-        $backtrace = debug_backtrace(0, 5); //obtenemos las 5 últimas llamadas para aseguranos de encontrar al llamador real
+        // 1. detect the method and class that called us
+        $backtrace = debug_backtrace(0, 5); // We get the last 5 calls to ensure us to find the real caller
 
-        // 2. Ignoramos los métodos intermedios (si existen) para obtener el metodo llamador real
+        // 2. We ignore the intermediate methods (if they exist) to obtain the real call method
         $callHelpers = $this->getConfig('parent_call_helpers');
-        //si se extendiera la cantidad de métodos ayudantes se podría meter en un config 
+        // If the amount of assistant methods could be extended, it could be put in a config
 
         $callerInfo = null;
-        // Empezamos en el índice 1, porque el 0 siempre es el método actual.
+        // We start in index 1, because 0 is always the current method.
         for ($i = 1; $i < count($backtrace); $i++) {
             $frame = $backtrace[$i];            
-            // Si el nombre de la función actual NO está en nuestra lista de ayudantes,
-            // entonces hemos encontrado al "llamador real".
+            // If the name of the current function is not on our list of assistants, then we have found the "real caller."
             if (!in_array($frame['function'], $callHelpers)) {
                 $callerInfo = $frame;
-                break; // Salimos del bucle.
+                break; 
             }
         }
 
@@ -327,93 +323,84 @@ private function dispatchAction(array $routeInfo)
 
         if (!$callerMethodName) {
             throw new LogicException("No se pudo determinar el método o clase que llama a getParentView.");
-        }
+        }        
 
-        
-
-        // 2. Obtener el padre real y preparar el método
+        // 2. get the real father and prepare the method
         $parentClass = get_parent_class($callerClassName);
         if (!method_exists($parentClass, $callerMethodName)) {
             throw new LogicException("El método {$callerMethodName} no existe en la clase padre {$parentClass}.");
         }        
 
-        // 3. Ejecutar el método del padre en el contexto del $this actual
-        $method = new ReflectionMethod($parentClass, $callerMethodName); //creamos un reflection del metodo
+        // 3. Execute the father's method in the context of the current $this
+        $method = new ReflectionMethod($parentClass, $callerMethodName); // We create a reflection of the method
 
         $numParams = $method->getNumberOfParameters(); 
-        $callerArgs = array_slice($callerArgs, 0, $numParams); //limitamos el numero de parametros a los del padre, por si ha habido alguna ampliacion
+        $callerArgs = array_slice($callerArgs, 0, $numParams);
 
-        $method->setAccessible(true); //quitamos el protected para que el reflexion method pueda lanzarse
+        $method->setAccessible(true); //Remove the protect for the reflection method can be launched
 
-        $response = $method->invokeArgs($callerObject, $callerArgs); //invocamos sobre $this (el objeto de la capa superior que haya llamado, nos permite mantener el estado, y pasamos los argumentos)
-
+        $response = $method->invokeArgs($callerObject, $callerArgs); //We invoke about $this (The object of the upper layer you have called, allows us to maintain the State, and we pass the arguments)
         return $response;
     }
 
 
 
     /**
-     * Crea y devuelve una instancia de la clase View, configurada
-     * con la ruta a la plantilla XSLT más específica que exista.
+     * Create and return an instance of the view class, configured
+     * with the route to the most specific XSLT template.
      *
-     * @param string $viewName El nombre de la vista a renderizar (ej: 'login').
+     * @param string $viewName The name of the view to render (eg: 'login').
      * @return View
      */
-    public function getView($viewName)
+    public function getView(string $viewName): View
     {
-        // Incluimos el archivo de la clase View.
         require_once 'lib/View.php';
-        
-        // Simplemente creamos la instancia y le pasamos
-        // la App y el nombre de la vista que debe gestionar.
         return new View($this, $viewName);
     }
 
-        /**
-     * Crea y devuelve un objeto de respuesta, cargando el archivo
-     * de su clase solo cuando es necesario.
+    /**
+     * Create and return an response object, loading the file of your class only when necessary.
      *
-     * @param string $type El tipo de respuesta (ej. 'json', 'view').
-     * @param mixed ...$args Los argumentos para el constructor de la respuesta.
+     * @param string $type The type of response (ej. 'json', 'view').
+     * @param mixed ...$args The arguments for the response builder
      * @return Response
      */
-    public function getResponse($type, ...$args)
+    public function getResponse(string $type, mixed ...$args) : Response
     {
-        // 1. Construimos el nombre de la clase y la ruta al archivo.
+        // 1. We build the name of the class and the route to the file.
         require_once "lib/response/Response.php";
-        $className = ucfirst($type) . 'Response'; // Asumiendo la convención con sufijo
-        $filePath = "lib/response/{$className}.php";  // Usamos el nombre de clase como nombre de archivo
+        $className = ucfirst($type) . 'Response'; // Assuming the convention with suffix
+        $filePath = "lib/response/{$className}.php";  // We use class name as file name
 
-        // 2. Cargamos el archivo de forma condicional, solo si no ha sido cargado antes.
-        // Gracias al include_path, PHP encontrará "lib/response/..." en "1base/".
+        // 2. We load the file
         require_once $filePath;
 
-        // 3. Verificamos que la carga fue exitosa y la clase existe.
+        // 3. We verify that the load was successful and the class exists.
         if (!class_exists($className)) {
-            // Este error solo ocurriría si el archivo no existe o tiene un nombre de clase incorrecto.
+            // This error would only happen if the file does not exist or has an incorrect class name.
             throw new Exception("No se pudo cargar la clase de respuesta: {$className}");
         }
         
-        // 4. Instanciamos la clase.
+        // 4. We instant the class.
         return new $className(...$args);
     }
 
     /**
-     * El "buscador" único. Encuentra la ruta a un archivo de componente
-     * recorriendo la jerarquía definida en la configuración.
+     * The unique "search engine". Find the route to a component file
+     * touring the hierarchy defined in the configuration.
      *
-     * @param string $type El tipo de componente ('controller', 'model').
-     * @param string $name El nombre base del componente.
-     * @return array|null Un array con ['path', 'suffix'] o null si no se encuentra.
+     * @param string $type The type of component ('controller', 'model').
+     * @param string $name The base name of the component.
+     * @return array|null An array with ['path', 'suffix'] or null if it is not found.
      */
-    public function findFile($type, $name, $userLayer = null, $exactLayerOnly = false)
+    public function findFile(string $type, string $name, ?int $userLayer = null, bool $exactLayerOnly = false) : array|null
     {
         if ($userLayer === null) { //if null, we get the user layer from context
             //this allow us to call with specific range.
             $userLayer = $this->userLayer ? $this->getUserLayer() : 1;
         }
 
-        // Obtener la subcarpeta del componente desde la configuración (ej: 'controllers').
+        // Obtain the component subfolder from the configuration (ej: 'controllers').
         $componentSubdir = $this->getConfig(['component_types',$type]) ?? null;
         if (!$componentSubdir) {
             throw new Exception("Tipo de componente desconocido: {$type}");
@@ -423,7 +410,7 @@ private function dispatchAction(array $routeInfo)
 
         $currentLayer = max(array_column($this->getConfig('layers'), 'layer')); //get the level of the highest rank of the hierarchy
         
-        // Iterar sobre la jerarquía de esta instalación (ej: ['audi', 'vwgroup', 'base']).
+        // Iterate about the hierarchy of this installation
         foreach ($this->getConfig('layers') as $layerKey => $layerInfo) {
 
             if ($userLayer < $currentLayer){     //if the userLayer is lower than the current layer, we wont look for a file           
@@ -431,21 +418,21 @@ private function dispatchAction(array $routeInfo)
                 continue;
             }
 
-            // Si queremos nivel exacto, y este no es, lo saltamos.
+            // If we want exact level, and this is not, we skip it.
             if ($exactLayerOnly && $currentLayer != $userLayer) {
                 $currentLayer--;
                 continue; 
             }
 
-            // Obtener la información de la capa desde la configuración.
+            // Obtain the layer information from the configuration.
             $layerDir = $layerInfo['directory'];
 
             $filePath = "{$layerDir}/{$relativePath}";
             
-            $absolutePath = __DIR__ . '/../' . '/../' . $filePath; //comprobamos si el archivo existe
+            $absolutePath = __DIR__ . '/../' . '/../' . $filePath; //We check if the file exists
 
             if (file_exists($absolutePath)) {
-                // ¡Encontrado! Devolvemos la información de la capa más específica.
+                // Found! We return the information of the most specific layer.
                 return [
                     'path'   => $absolutePath,
                     'suffix' => $layerInfo['suffix'],
@@ -454,7 +441,7 @@ private function dispatchAction(array $routeInfo)
                 ];
             }
 
-            //si estabamos en el nivel exacto y no lo hemos encontrado, devolvemos null
+            //If we were at the exact level and we have not found it, we return null
             if ($exactLayerOnly && $currentLayer == $userLayer) {
                 return null;
             }
@@ -464,8 +451,13 @@ private function dispatchAction(array $routeInfo)
         return null;
     }   
 
+
     /**
-     * Accede a una clave de configuración usando path tipo 'a.b.c' o array ['a','b','c'].
+     * Access a configuration key using type path type 'a.b.c' or array ['a','b','c'].
+     *
+     * @param string|array $path
+     * @param mixed $default
+     * @return mixed
      */
     public function getConfig(string|array $path, mixed $default = null): mixed {
         
@@ -484,89 +476,82 @@ private function dispatchAction(array $routeInfo)
         return $value;
     }
 
-    public function getTranslator()
+    public function getTranslator() : TranslatorService
     {
-        // Si ya hemos creado el traductor en esta petición, lo devolvemos (caché).
+        // If we have already created the translator in this request, we return it (cache).
         if ($this->translatorService !== null) {
             return $this->translatorService;
         }
 
-        // --- LÓGICA DE DETECCIÓN DE IDIOMA MEJORADA ---
-
-        $defaultLanguage = 'en'; // Nuestro idioma por defecto
-        $finalLang = $defaultLanguage; // Asumimos el por defecto para empezar
+        $defaultLanguage = 'en'; // Our default language
+        $finalLang = $defaultLanguage; // We assume the default to start
         $cookieName = 'user_language';
-        $cookieDuration = time() + (86400 * 365); // 1 año
+        $cookieDuration = time() + (86400 * 365); // 1 year
 
-        // 1. Prioridad Máxima: ¿El usuario está cambiando el idioma AHORA MISMO?
+        // 1. Maximum priority: Is the user changing the language right now?
         if (isset($_GET['lang'])) {
             $finalLang = $_GET['lang'];
-            // Guardamos esta elección explícita en la sesión y en la cookie.
+            // We keep this explicit choice in the session and in the cookie.
             $_SESSION['lang'] = $finalLang;
             setcookie($cookieName, $finalLang, $cookieDuration, '/');
         }
-        // 2. Segunda Prioridad: ¿El usuario tiene una cookie de una visita anterior?
+        // 2. Second priority: Does the user have a cookie of a previous visit?
         elseif (isset($_COOKIE[$cookieName])) {
             $finalLang = $_COOKIE[$cookieName];
-            // Lo guardamos en la sesión para esta visita.
+            // We keep it in the session for this visit.
             $_SESSION['lang'] = $finalLang;
         }
-        // 3. Tercera Prioridad: ¿Hay un idioma guardado en la sesión activa?
+        // 3. Third priority: Is there a language saved in the active session?
         elseif (isset($_SESSION['lang'])) {
             $finalLang = $_SESSION['lang'];
         }
-        // 4. Cuarta Prioridad: ¿Podemos detectar el idioma del navegador?
+        // 4. Fourth priority: Can we detect the browser's language?
         elseif (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-            // Esto nos da algo como "es-ES,es;q=0.9,en;q=0.8".
+            // This gives us something like "es-ES,es;q=0.9,en;q=0.8".
             // Nos quedamos con los dos primeros caracteres.
             $finalLang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
-            // Creamos la cookie por primera vez para este visitante.
+            // We create the cookie for the first time for this visitor.
             setcookie($cookieName, $finalLang, $cookieDuration, '/');
             $_SESSION['lang'] = $finalLang;
         }
-        // Si ninguna de las anteriores se cumple, se usará el $defaultLanguage.
+        // If none of the above is fulfilled, we'll use the $defaultLanguage.
 
-        // --- FIN DE LA LÓGICA DE DETECCIÓN ---
         $this->setContext('language_code',$finalLang);
-
-        debug("translator solo se crea una vez",$finalLang,false);
         
-        // Creamos el servicio de traducción con el idioma final decidido.
+        // We create the translation service with the determined final language.
         $this->translatorService = $this->getService('Translator', $finalLang);
 
         return $this->translatorService;
     }
 
-/**
-     * Crea y devuelve una instancia de un Servicio.
-     * Inyecta automáticamente la instancia de la App como primer
-     * argumento del constructor del servicio.
+    /**
+     * Create and return an instance of a service.
+     * Automatically injects the app instance as the first argument of the service builder.
      *
-     * @param string $serviceName El nombre base del servicio.
-     * @param mixed ...$args (Opcional) Argumentos ADICIONALES que el desarrollador quiera pasar.
-     * @return object La instancia del servicio.
+     * @param string $serviceName The base name of the service.
+     * @param mixed ...$args (Optional) Additional arguments for specific service
+     * @return object The service instance.
      */
     public function getService($serviceName, ...$args)
     {
-        // 1. Creamos un array con la App como primer elemento.
+        // 1. We create an array with the app as first element.
         $constructorArgs = [$this];
         
-        // 2. Fusionamos los argumentos adicionales que pasó el desarrollador.
+        // 2. We fuse the additional arguments
         $constructorArgs = array_merge($constructorArgs, $args);
 
-        // 3. Llamamos al getComponent genérico con la lista de argumentos completa.
+        // 3. We call the GET Component generic with the list of full arguments.
         return $this->getComponent('service', $serviceName.'Service', $constructorArgs);
     }
 
     public function getHelper($helperName, ...$args)
     {
-        // 1. Creamos un array con la App como primer elemento.
+        // 1. We create an array with the app as first element.
         $constructorArgs = [$this];
         
-        // 2. Fusionamos los argumentos adicionales que pasó el desarrollador.
+        // 2. We merge the additional arguments that the developer passed.
         $constructorArgs = array_merge($constructorArgs, $args);
 
-        // 3. Llamamos al getComponent genérico con la lista de argumentos completa.
         return $this->getComponent('helper', $helperName.'Helper', $constructorArgs);
     }
     
@@ -579,12 +564,12 @@ private function dispatchAction(array $routeInfo)
 
     private function sendResponse(Response $response)
     {
-        // --- PASO 1: ENVIAR CABECERAS ---
+        // --- Step 1: Send headers ---
         
-        // Enviamos el código de estado HTTP (ej. 200, 404, 302).
+        // We send the HTTP status code (ej. 200, 404, 302).
         http_response_code($response->getStatusCode());
 
-        // Enviamos todas las cabeceras definidas en el objeto de respuesta.
+        // We send all the headwaters defined in the response object
         foreach ($response->getHeaders() as $name => $value) {
             header("{$name}: {$value}");
         }
@@ -594,31 +579,35 @@ private function dispatchAction(array $routeInfo)
         $content = $response->getContent();
 
         if ($response instanceof ViewResponse) {
-            // Si la respuesta es una vista, llamamos a su método render().
-            // El objeto $content es en realidad nuestro objeto View.
+            // If the answer is a view, we call your render method ().
             $content->render($response->getUserLayer());
 
         } elseif ($response instanceof JsonResponse) {
-            // Si es JSON, codificamos el contenido (que es un array/objeto) y lo imprimimos.
+            // If it is JSON, we encode the content (which is an array/object) and printed it.
             echo json_encode($content);
 
         } elseif ($response instanceof FileResponse) {
-            // Si es un archivo, leemos su contenido y lo enviamos directamente.
-            // El $content es la ruta al archivo.
+            // If it is a file, we read its content and send it directly.
+            // $content It is the route to the file.
             readfile($content);
 
         } elseif ($response instanceof RedirectResponse) {
-            // Para una redirección, no hay contenido que enviar. La cabecera
-            // 'Location' que ya enviamos es todo lo que se necesita.
+            // For a redirection, there is no content to send. The header
+            // 'Location' That we already send is all that is needed.
 
         } else {
-            // Para una respuesta base o desconocida, simplemente imprimimos el contenido.
+            // For a base or unknown response, we simply print the content.
             echo $content;
         }
         exit();
     }
 
-    private function prepareDebugging()
+    /**
+     * Set the layers for the request if they they were set by the debugging panel of "debug.php" 
+     *
+     * @return void
+     */
+    private function prepareDebugging() : void
     {
         if (!defined('DEBUG_ON') || !DEBUG_ON || !defined('DEBUG_PANEL') || !DEBUG_PANEL) return;
 

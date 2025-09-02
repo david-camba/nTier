@@ -1,12 +1,12 @@
 <?php
 /**
- * Clase base abstracta de la que deben heredar todos los helpers.
- * Proporciona funcionalidades y propiedades comunes.
+ * Abstract base class of which all helpers must inherit.
+ * It provides common functionalities and properties.
  */
 abstract class Helper
 {
-    protected $app;
-    protected $translator;
+    protected App $app;
+    protected TranslatorService $translator;
 
     public function __construct(App $app)
     {
@@ -15,14 +15,18 @@ abstract class Helper
     }
 
     /**
-     * Atajo para obtener una cadena de texto traducida.
+     * Shortcut to obtain a translated text chain.
+     *
+     * @param string $key
+     * @param array $replacements
+     * @return void
      */
-    protected function translate($key, array $replacements = [])
+    protected function translate(string $key, array $replacements = [])
     {
         return $this->translator->get($key, $replacements);
     }
 
-    protected function getConfig($key, $default = null)
+    protected function getConfig(array|string $key, mixed $default = null)
     {
         return $this->app->getConfig($key, $default);
     }
@@ -33,10 +37,10 @@ abstract class Helper
     }
 
     /**
-     * Ejecuta el mismo método en la clase padre y devuelve su respuesta.
-     * Detecta automáticamente el nombre del método que lo llamó y ajusta los argumentos según el padre.
+     * Execute the same method in the father class and return your answer.
+     * Automatically detects the name of the method that called it and adjusts the arguments according to the father.
      * 
-     * @return mixed La respuesta del método padre 
+     * @return mixed The response of the father method
      */
     protected function callParent() : mixed
     {

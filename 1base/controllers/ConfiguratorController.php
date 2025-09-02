@@ -4,8 +4,8 @@ class ConfiguratorController_Base extends Controller
 {
 
     /**
-     * Muestra la página principal del configurador.
-     * Carga el "esqueleto" de la SPA.
+     * Show the main page of the configurator.
+     * Load the "skeleton" of the spa.
      *
      * @param int|null $sessionIdToLoad (Opcional) El ID de una sesión de configuración
      *                                  específica para cargar (ej. una plantilla).

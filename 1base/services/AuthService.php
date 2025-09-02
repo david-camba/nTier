@@ -7,33 +7,42 @@ class AuthService_Base extends Service
     public function __construct(App $app)
     {
         $this->app = $app;
-        //$this->translator = $this->app->getTranslator(); 
-        //sobreescribimos el constructor global de "service" para quitar el translator para que no se inicialice antes de setear las capas
+
+        //NO: $this->translator = $this->app->getTranslator(); 
+        // We overwritten the global "Service" builder to remove the translator so that it is not initialized before setting the layers
     }
 
-    /**
-     * El método principal de seguridad. Orquesta la autenticación y el
-     * control de acceso para la petición actual.
-     *
-     * @param array $routeInfo El plan de acción original del Router.
-     * @return array El plan de acción final y validado.
-     */
-    public function authenticateRequest(array $routeInfo)
+    /** 
+    * The main security method. Orchestra Authentication and 
+    * Access control for the current request. 
+    * 
+    * @param Array $routeInfo The original router action plan. 
+    * @return Array The final and validated action plan. 
+    */
+    public function authenticateRequest(array $routeInfo): array
     {
         // 1. Intentamos obtener el usuario autenticado.
         $authenticatedUser = $this->getAuthenticatedUser();
-        $authenticatedRoute = $this->setAppContext($routeInfo, $authenticatedUser);
+        $authenticatedRoute = $this->setUserContextAndAuthenticateRoute($routeInfo, $authenticatedUser);
 
         return $authenticatedRoute;
     }
 
-    protected function setAppContext($routeInfo, $authenticatedUser){
-    // 2. Guardamos el usuario (o null) en el contexto de la App.
+    /**
+     * Set user context for the app and return the authenticated route.
+     *
+     * @param array $routeInfo
+     * @param User|null $authenticatedUser
+     * @return array
+     */
+    protected function setUserContextAndAuthenticateRoute(array $routeInfo, ?User $authenticatedUser): array
+    {
+        // 1. We keep the user (or null) in the context of the app.
         $this->setContext('user', $authenticatedUser);
 
-        // 3. Aplicamos las reglas de acceso.
+        // 2. Apply the access rules.
         if ($authenticatedUser) {
-            // Usuario logueado.
+            // Logged user.
             $userLayer = $authenticatedUser->fetchUserLayer();
             $this->setUserLayer($userLayer);
         
@@ -42,98 +51,104 @@ class AuthService_Base extends Service
             
             $currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
             if ($currentPath === '/login') {
-                // Si está logueado y va al login, lo redirigimos.
+                // If you are login and go to login, we redirect it.
                 $this->redirect('/app', 301);
                 exit();
             }
-            // Si no, tiene acceso.
+            // If not, you have access.
             return $routeInfo;
 
         } else {
-            // Usuario no logueado (invitado).
-            //$this->setUserLayer(1); // Nivel de invitado
-            $this->setUserLayer(3); //for this app, we'll use the third layer for no logged users
-            $this->setUserLevel(0); //Nivel de invitado
+            // User not logged (guest).
 
-            // Comprobamos si la ruta es pública.
+            //$this->setUserLayer(1); // Guest level
+            $this->setUserLayer(3); //for this app, we'll use the third layer for no logged users
+
+            $this->setUserLevel(0); // Guest level
+
+            // We check if the route is public.
             if ($this->isPublicRoute($routeInfo)) {               
                 return $routeInfo;
             } else {
-                //Si no, le mandamos al login
+                // If not, we send to login
                 $this->redirect('/login');
                 exit();
             }
         }
     }
 
-    /**
-     * Verifica la cookie de sesión y la base de datos para autenticar al usuario.
-     *
-     * @return array|null Devuelve un array con los datos del usuario y la sesión
-     *                    si la autenticación es exitosa, o null si no lo es.
-     */
-    protected function getAuthenticatedUser()
+    /** 
+    * Verify the session cookie and the database to authenticate the user. 
+    * 
+    * @return array | null returns an array with user data and session 
+    * If the authentication is successful, or null if it is not. 
+    */
+    protected function getAuthenticatedUser() : ?User
     {
-        // 1. Obtener el token de la cookie del navegador.
+        // 1. Obtain the token from the cookie of the browser.
         $token = $_COOKIE['session_token'] ?? null;
         if (!$token) {
             $this->getModel('Request',[],1,false)->log("NO SESSION", null);            
             return null; // Si no hay cookie, no hay usuario.
         }
-        // 2. Obtener un "buscador" para el modelo UserSession.
+        // 2. Obtain a "search engine" for the User Session model.
         $session = $this->getModel('UserSession',[],1,false)->find($token, 'token');
 
-        // 4. Validar la sesión encontrada.
+        // 4. Validate the session found.
         if (!$session) {
             $this->getModel('Request',[],1,false)->log("TOKEN INVALID", $session);
-            // El token no es válido o no está en la BBDD.
-            // (Aquí podríamos borrar la cookie inválida del usuario).
-            setcookie('session_token', '', ['expires' => time() - 3600, 'path' => '/', 'httponly' => true,'samesite' => 'Lax' //'domain' => '.tudominio.com', //'secure' => true,
+            // Token is not valid or is not in the BBDD. 
+            // (Here we could erase the user's invalid cookie).
+            setcookie('session_token', '', ['expires' => time() - 3600, 'path' => '/', 'httponly' => true,'samesite' => 'Lax' //'domain' => 'dominio.com', //'secure' => true,
             ]);
             unset($_COOKIE['session_token']);
             return null;
         }
 
-        // 5. Comprobar si la sesión ha expirado.
+        // 5. Check if the session has expired.
         $now = new DateTime();
         $expiration = new DateTime($session->expiration_date);
 
         if ($now > $expiration) {      
             setcookie('session_token', '', ['expires' => time() - 3600, 'path' => '/', 'httponly' => true,'samesite' => 'Lax' //'domain' => '.tudominio.com', //'secure' => true,
-            ]); //borramos cookie
-            unset($_COOKIE['session_token']);
+            ]); 
+            unset($_COOKIE['session_token']); // We delete cookie
             $this->getModel('Request',[],1,false)->log("EXPIRED SESSION", $session);
             return null;
         }
 
-        // 6. (Opcional pero recomendado) Comprobar IP y User Agent.
-        // Esto previene el robo de la cookie de sesión.
+        // 6. (Optional but recommended) Check IP and User Agent. 
+        // This prevents the theft of the cookie by session.
         if ($session->ip !== $_SERVER['REMOTE_ADDR'] || $session->user_agent !== $_SERVER['HTTP_USER_AGENT']) {
-            // ¡Alerta de seguridad! Alguien podría haber robado la cookie.   
+            // Safety alert! Someone could have stolen the cookie.
             $this->getModel('Request',[],1,false)->log("SESSION_HIJACK_ATTEMPT", $session);
-            $session->delete(); // invalidar esta sesión en la BBDD
+            $session->delete(); // Invalidate this session in the BBDD
             return null;
         }
 
-        // 7. ¡Éxito! La sesión es válida.
-        // Devolvemos la información crucial para el resto de la aplicación.
-        $this->getModel('Request',[],1,false)->log("SUCCESS", $session); //guardamos la requests
+        // 7. Success! The session is valid. 
+        // We return the crucial information for the rest of the application.
+        $this->getModel('Request',[],1,false)->log("SUCCESS", $session); // We keep the request
 
         $user = $this->getModel('User',[],1,false)->find($session->id_user);
-        $user->token = $token; //le añadimos el token
-        //eliminamos datos sensibles        
+        $user->token = $token; // We add the token
+        // We eliminate sensitive data      
         unset($user->password);
         unset($user->tries);
 
-        return $user; //devolvemos el usuario
+        return $user; // We return the user
     }
     
+    
     /**
-     * Comprueba si una ruta está en la "lista blanca" de acceso público.
+     * Check if a route is on the "white list" of public access.
+     *
+     * @param array $routeInfo
+     * @return boolean
      */
-    protected function isPublicRoute(array $routeInfo)
+    protected function isPublicRoute(array $routeInfo) : bool
     {
-        // ANOTACIÓN: Mover a config/security.php en un futuro.
+        // TO EXTEND: move to security.php 
         if ($routeInfo['type'] === 'legacy_script') {
             $publicRoutes = ['legacy/bienvenida.php'];
             return in_array($routeInfo['script_path'], $publicRoutes);
@@ -148,15 +163,18 @@ class AuthService_Base extends Service
         return false;
     }
 
-    protected function setUserLayer($userLayer){
+    protected function setUserLayer($userLayer): void
+    { 
         $this->app->setUserLayer($userLayer);
     }
 
-    protected function setUserLevel($userLevel){
+    protected function setUserLevel($userLevel) : void
+    {
         $this->app->setUserLevel($userLevel);
     }
 
-    protected function redirect($url, $statusCode=200){
+    protected function redirect($url, $statusCode=200) : void
+    {
         $this->app->redirect($url, $statusCode);
     }
 }

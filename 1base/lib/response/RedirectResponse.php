@@ -3,15 +3,15 @@
 require_once 'lib/response/Response.php';
 
 /**
- * Representa una respuesta de redirección HTTP.
+ * It represents an HTTP redirection response.
  */
 class RedirectResponse extends Response
 {
     /**
-     * @param string $url La URL a la que se debe redirigir.
-     * @param int $statusCode El código de estado (302 por defecto para redirección temporal).
+     * @param string $url The URL to which it must be redirected.
+     * @param int $statusCode The State Code (302 default for temporary redirection).
      */
-    public function __construct($url, $statusCode = 302)
+    public function __construct(string $url, int $statusCode = 302)
     {
         // El contenido de una redirección está vacío.
         // La magia está en la cabecera 'Location'.
