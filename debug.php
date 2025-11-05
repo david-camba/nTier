@@ -56,21 +56,50 @@ if(!defined(DEBUG_ON) || !DEBUG_ON ||!defined(DEBUG_PANEL) || !DEBUG_PANEL){
         //if (!defined('DEBUG_ON') || !DEBUG_ON) return;
         // Obtenemos los valores actuales de la URL para pre-seleccionarlos.
 
+        ob_start();
+
         $currentUserLayer = $layerLevelFixed['fixedUserLayer'] ?? '';
         $currentUserLevel = $layerLevelFixed['fixedUserLevel'] ?? '';      
+
+
+
+        $finalLang = 'en'; // We assume the default to start
+        $cookieName = 'user_language';
+
+        // 1. Maximum priority: Is the user changing the language right now?
+        if (isset($_GET['lang'])) {
+            $finalLang = $_GET['lang'];
+        }
+        // 2. Second priority: Does the user have a cookie of a previous visit?
+        elseif (isset($_COOKIE[$cookieName])) {
+            $finalLang = $_COOKIE[$cookieName];
+        }
+        // 3. Third priority: Is there a language saved in the active session?
+        elseif (isset($_SESSION['lang'])) {
+            $finalLang = $_SESSION['lang'];
+        }
+        // 4. Fourth priority: Can we detect the browser's language?
+        elseif (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+            // This gives us something like "es-ES,es;q=0.9,en;q=0.8".
+            // Nos quedamos con los dos primeros caracteres.
+            $finalLang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
+        }
+
+        $debugPanelTitle = 'Debug Panel - Try it out!';
+        if($finalLang === 'es') $debugPanelTitle = 'Panel Debug - Juega con él!';
         
         // --- INICIO DEL BLOQUE HEREDOC PARA HTML Y CSS ---
         // Heredoc (<<<HTML) es una forma limpia de escribir bloques largos de HTML/CSS en PHP.
         echo <<<HTML
-        <div id="debug-panel-container" style="position:fixed; bottom:10px; right:10px; z-index:9999; font-family: Arial, sans-serif; font-size: 14px; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.5);">
-            <strong style="display: block; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px;">Debug Panel</strong>
+        <div id="debug-panel-container" style="">
+            <strong style="display: block; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px;">{$debugPanelTitle}</strong>
             
             <form id="debug-form" style="display: flex; align-items: center; gap: 15px;">
                 <div>
                     <label for="debug_user_layer" style="display: block; font-size: 12px; margin-bottom: 5px;">Layer Level:</label>
                     <select id="debug_user_layer" name="user_layer" style="padding: 5px;">
                         <option value="auto">-- Auto --</option>
-    HTML;
+        HTML;
 
         // --- GENERAR OPCIONES PARA LAYER LEVEL DINÁMICAMENTE ---
         foreach ($config['layers'] as $layerKey => $layerInfo) {
@@ -89,7 +118,7 @@ if(!defined(DEBUG_ON) || !DEBUG_ON ||!defined(DEBUG_PANEL) || !DEBUG_PANEL){
                     <label for="debug_user_level" style="display: block; font-size: 12px; margin-bottom: 5px;">User Level:</label>
                     <select id="debug_user_level" name="user_level" style="padding: 5px;">
                         <option value="auto">-- Auto --</option>
-    HTML;
+        HTML;
 
         // --- GENERAR OPCIONES PARA USER LEVEL DINÁMICAMENTE ---
         // Invertimos y ordenamos para que los roles se muestren de mayor a menor.
@@ -140,8 +169,9 @@ if(!defined(DEBUG_ON) || !DEBUG_ON ||!defined(DEBUG_PANEL) || !DEBUG_PANEL){
                 window.location.href = currentUrl.toString();
             });
         </script>
-    HTML;
+        HTML;
         // --- FIN DEL BLOQUE HEREDOC ---
+        return ob_get_clean();
     };
 } 
 

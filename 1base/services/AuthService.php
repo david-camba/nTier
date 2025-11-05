@@ -7,15 +7,16 @@ interface AuthService{}
 
 class AuthService_Base extends Service implements AuthService
 {
-    protected App $app;
+    protected LayerResolver $layerResolver;
 
-    public function __construct(App $app)
+    public function __construct(LayerResolver $layerResolver)
     {
-        $this->app = $app; 
+        $this->layerResolver = $layerResolver; 
         /** We'll use App:
          *  1- To set the Context, UserLayer and UserLevel 
          *  2- Handle redirections if needed
-         *  3- Get the models: Request, User, UsserSession without caching the factory when it's not needed
+         *
+         *  We'll use the "layerResolver" to get the models: Request, User, UsserSession without caching the factory
          */        
         
         //NEVER build TranslatorService here.
@@ -50,11 +51,11 @@ class AuthService_Base extends Service implements AuthService
         /** @var User_Base|null $authenticatedUser */
         
         // 1. We keep the user (or null) in the context of the app.
-        $this->app->setContext('user', $authenticatedUser);
+        $this->setContext('user', $authenticatedUser);
 
         // 2. Apply the access rules.
         if ($authenticatedUser) {
-            // Logged user.
+            // If is Logged user
             $userLayer = $authenticatedUser->fetchUserLayer();
             $this->setUserLayer($userLayer);
         
@@ -98,15 +99,15 @@ class AuthService_Base extends Service implements AuthService
         // 1. Obtain the token from the cookie of the browser.
         $token = $_COOKIE['session_token'] ?? null;
         if (!$token) {
-            $this->app->getModel('Request',[],1,false)->log("NO SESSION", null);            
+            $this->layerResolver->getModel('Request',[],1,false)->log("NO SESSION", null);            
             return null; // Si no hay cookie, no hay usuario.
         }
         // 2. Obtain a "search engine" for the User Session model.
-        $session = $this->app->getModel('UserSession',[],1,false)->find($token, 'token');
+        $session = $this->layerResolver->getModel('UserSession',[],1,false)->find($token, 'token');
 
         // 4. Validate the session found.
         if (!$session) {
-            $this->app->getModel('Request',[],1,false)->log("TOKEN INVALID", $session);
+            $this->layerResolver->getModel('Request',[],1,false)->log("TOKEN INVALID", $session);
             // Token is not valid or is not in the BBDD. 
             // (Here we could erase the user's invalid cookie).
             setcookie('session_token', '', ['expires' => time() - 3600, 'path' => '/', 'httponly' => true,'samesite' => 'Lax' //'domain' => 'dominio.com', //'secure' => true,
@@ -123,7 +124,7 @@ class AuthService_Base extends Service implements AuthService
             setcookie('session_token', '', ['expires' => time() - 3600, 'path' => '/', 'httponly' => true,'samesite' => 'Lax' //'domain' => '.tudominio.com', //'secure' => true,
             ]); 
             unset($_COOKIE['session_token']); // We delete cookie
-            $this->app->getModel('Request',[],1,false)->log("EXPIRED SESSION", $session);
+            $this->layerResolver->getModel('Request',[],1,false)->log("EXPIRED SESSION", $session);
             return null;
         }
 
@@ -131,16 +132,16 @@ class AuthService_Base extends Service implements AuthService
         // This prevents the theft of the cookie by session.
         if ($session->ip !== $_SERVER['REMOTE_ADDR'] || $session->user_agent !== $_SERVER['HTTP_USER_AGENT']) {
             // Safety alert! Someone could have stolen the cookie.
-            $this->app->getModel('Request',[],1,false)->log("SESSION_HIJACK_ATTEMPT", $session);
+            $this->layerResolver->getModel('Request',[],1,false)->log("SESSION_HIJACK_ATTEMPT", $session);
             $session->delete(); // Invalidate this session in the BBDD
             return null;
         }
 
         // 7. Success! The session is valid. 
         // We return the crucial information for the rest of the application.
-        $this->app->getModel('Request',[],1,false)->log("SUCCESS", $session); // We keep the request
+        $this->layerResolver->getModel('Request',[],1,false)->log("SUCCESS", $session); // We keep the request
 
-        $user = $this->app->getModel('User',[],1,false)->find($session->id_user);
+        $user = $this->layerResolver->getModel('User',[],1,false)->find($session->id_user);
         $user->token = $token; // We add the token
         // We eliminate sensitive data      
         unset($user->password);
@@ -165,7 +166,7 @@ class AuthService_Base extends Service implements AuthService
         }
         
         if ($routeInfo['type'] === 'mvc_action') {
-            $publicRoutes = ['AuthController:showLogin', 'AuthController:doLoginAPI'];
+            $publicRoutes = ['AuthController:showLogin', 'AuthController:doLoginAPI', 'AuthController:createAuthUser'];
             $currentRoute = "{$routeInfo['controller']}:{$routeInfo['action']}";
             return in_array($currentRoute, $publicRoutes);
         }
@@ -190,7 +191,7 @@ class AuthService_Base extends Service implements AuthService
 
         // 2. Usar el modelo User para encontrar al usuario por su username.
         /** @var User_Base|null $user */
-        $user =  $this->app->getModel("User")->find($username, 'username');
+        $user =  $this->layerResolver->getModel("User")->find($username, 'username');
 
         // Escenario de Fracaso: Usuario no encontrado
         if (!$user) {
@@ -221,7 +222,7 @@ class AuthService_Base extends Service implements AuthService
             $user->resetLoginTries();     
             
             /** @var UserSession_Base $userSession */
-            $userSession = $this->app->getModel('UserSession');
+            $userSession = $this->layerResolver->getModel('UserSession');
             $token = $userSession->createForUser($user->id_user, $user->id_dealer);
 
             // 5. Enviar el token al navegador en una cookie segura.
@@ -260,7 +261,7 @@ class AuthService_Base extends Service implements AuthService
 
         if ($token) {
             // 2. Usar el modelo para encontrar la sesión por el token.
-            $session = $this->app->getModel('UserSession')->find($token, 'token');
+            $session = $this->layerResolver->getModel('UserSession')->find($token, 'token');
 
             if ($session) {
                 // 3. Si la encontramos, la eliminamos de la base de datos.
@@ -279,23 +280,32 @@ class AuthService_Base extends Service implements AuthService
         return $this->redirect('/login');
     }
 
+    public function createGuestUser() : ?array
+    {
+        $user = $this->layerResolver->getModel("User");
+
+        $userData = $user->createGuestUser(11); //creamos un usuario en el concesionario 11 que es donde está los clientes de la demo
+
+        return $userData; //devolvemos su usuario y contraseña en texto plano
+    }
+
     protected function setUserLayer($userLayer): void
     { 
-        $this->app->setUserLayer($userLayer);
+        App::getInstance()->setUserLayer($userLayer);
     }
 
     protected function setUserLevel($userLevel) : void
     {
-        $this->app->setUserLevel($userLevel);
+        App::getInstance()->setUserLevel($userLevel);
     }
 
     public function setContext($key, $value)
     {
-        return $this->app->setContext($key, $value);
+        App::getInstance()->setContext($key, $value);
     }
 
     protected function redirect($url, $statusCode=200) : never
     {
-        $this->app->redirect($url, $statusCode);
+        App::getInstance()->redirect($url, $statusCode);
     }
 }

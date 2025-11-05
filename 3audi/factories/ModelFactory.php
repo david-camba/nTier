@@ -9,17 +9,17 @@ class ModelFactory_3Audi extends ModelFactory_Base
         };
 
         if ($pdo) {
-            return $this->app->getComponent('model', $modelName, [$this->app, $pdo, $constructorArgs], $userLevel);
+            return $this->layerResolver->getComponent('model', $modelName, [$this->layerResolver, $pdo, $constructorArgs], $userLevel);
         }
 
         //if not this specific case, then parent factory will handle the model
-        return $this->app->callParent($this);
+        return $this->layerResolver->callParent($this);
     }
     
     // --- MÉTODOS DE CONEXIÓN ---
     protected function getProductAudiDBConnection()
     {
-        $brand = $this->app->getConfig('general.brandName');
+        $brand = App::getInstance()->getConfig('general.brandName');
         $dbName = "{$brand}_prod";
 
         if (!isset($this->connections[$dbName])) {

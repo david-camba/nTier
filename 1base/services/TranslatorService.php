@@ -26,20 +26,20 @@ class TranslatorService_Base extends Service implements TranslatorService
      */
     protected $translations = [];
 
-    protected App $app;
+    protected LayerResolver $layerResolver;
 
     /**
      * El constructor inicializa el servicio para un idioma específico.
      *
      * @param string $languageCode El código del idioma a cargar.
      */
-    public function __construct(App $app)
+    public function __construct(LayerResolver $layerResolver)
     {
         //TO-DO: deberia inyectarle una clase "Request" que contenga los datos de la petición y que la reciba o la setee App. Así no trabajo con globales.
 
-        $this->app = $app;
+        $this->layerResolver = $layerResolver;
         $this->languageCode = $this->getLanguageCode();   
-        $this->app->setContext('language_code', $this->languageCode);     
+        App::getInstance()->setContext('language_code', $this->languageCode);     
         $this->loadTranslations();
     }
 
@@ -106,7 +106,7 @@ class TranslatorService_Base extends Service implements TranslatorService
         $mergedTranslations = [];
         
         // 1. Obtenemos las capas a las que accede el usuario actual
-        $totalLayers = $this->app->getUserLayer();        
+        $totalLayers = App::getInstance()->getUserLayer();        
 
         // 2. Iteramos desde el nivel más bajo (1, base) hasta el más alto.
         // Este orden es crucial para que `array_merge` sobreescriba correctamente
@@ -116,7 +116,7 @@ class TranslatorService_Base extends Service implements TranslatorService
             // 3. Usamos findFile con 'exactLevelOnly' a 'true' para buscar el archivo
             // de traducción SOLO en este nivel exacto.
 
-            $fileInfo = $this->app->findFiles('translation', $langCode, $layer, true, false);
+            $fileInfo = $this->layerResolver->findFiles('translation', $langCode, $layer, true, false);
 
             // 4. Si se encuentra un archivo de traducción para este nivel...
             if ($fileInfo) {

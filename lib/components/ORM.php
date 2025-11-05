@@ -17,7 +17,7 @@ abstract class ORM implements InterfaceORM
  * Todos los modelos de la aplicación heredarán de esta clase.
  * Proporciona métodos CRUD para interactuar con la base de datos.
  */
-    protected App $app;
+    protected LayerResolver $layerResolver;
 
     protected $relations = [];
     
@@ -51,9 +51,9 @@ abstract class ORM implements InterfaceORM
      * El constructor recibe la conexión PDO y la almacena.
      * Opcionalmente puede recibir un array de atributos para llenar el modelo.
      */
-    public function __construct(App $app, PDO $pdo, array $data = [])
+    public function __construct(LayerResolver $layerResolver, PDO $pdo, array $data = [])
     {
-        $this->app = $app;
+        $this->layerResolver = $layerResolver;
         $this->pdo = $pdo;
         $this->data = $data;
     }
@@ -153,7 +153,7 @@ abstract class ORM implements InterfaceORM
 
             // Si encontramos datos, creamos una nueva instancia "llena".
             // Le pasamos la App y el PDO para que el nuevo objeto también sea funcional.
-            return new static($this->app, $this->pdo, $filteredData);
+            return new static($this->layerResolver, $this->pdo, $filteredData);
         }
         
         return null;
@@ -207,7 +207,7 @@ abstract class ORM implements InterfaceORM
         foreach ($allData as $data) {
             $filteredData = array_diff_key($data, array_flip($this->hidden));
             // Por cada fila de datos, creamos una nueva instancia "llena" del modelo.
-            $items[] = new static($this->app, $this->pdo, $filteredData);
+            $items[] = new static($this->layerResolver, $this->pdo, $filteredData);
         }
         
         // 4. Devolvemos los resultados envueltos en nuestro objeto Collection.
@@ -236,7 +236,7 @@ abstract class ORM implements InterfaceORM
         foreach ($allData as $data) {
             // Filtramos los datos ocultos antes de crear el objeto
             $filteredData = array_diff_key($data, array_flip($this->hidden));
-            $items[] = new static($this->app, $this->pdo, $filteredData);
+            $items[] = new static($this->layerResolver, $this->pdo, $filteredData);
         }
         
         return new Collection($items);
@@ -378,7 +378,7 @@ abstract class ORM implements InterfaceORM
         if ($foreignKey === null) $foreignKey = $this->primaryKey;
         // Obtenemos la instancia "vacía" del modelo relacionado desde la fábrica
         // para poder usar sus métodos de búsqueda.
-        $relatedInstance = $this->app->getModel($relatedModel);
+        $relatedInstance = $this->layerResolver->getModel($relatedModel);
         
         // El valor de la clave foránea en este objeto actual.
         $relatedId = $this->{$foreignKey};
@@ -396,7 +396,7 @@ abstract class ORM implements InterfaceORM
     {
         if ($foreignKey === null) $foreignKey = $this->primaryKey;
 
-        $relatedInstance = $this->app->getModel($relatedModel);
+        $relatedInstance = $this->layerResolver->getModel($relatedModel);
         
         // El valor de nuestra clave primaria.
         $localId = $this->{$this->primaryKey};
@@ -416,7 +416,7 @@ abstract class ORM implements InterfaceORM
     {
         if($foreignPivotKey === null) $foreignPivotKey = $this->primaryKey;
 
-        $relatedInstance = $this->app->getModel($relatedModel);
+        $relatedInstance = $this->layerResolver->getModel($relatedModel);
         $relatedTable = $relatedInstance->tableName;
         $relatedPk = $relatedInstance->primaryKey;
 
@@ -433,7 +433,7 @@ abstract class ORM implements InterfaceORM
 
         $items = [];
         foreach ($allData as $data) {            
-            $items[] = $this->app->getModel($relatedModel, $data);
+            $items[] = $this->layerResolver->getModel($relatedModel, $data);
         }
 
         return new Collection($items);

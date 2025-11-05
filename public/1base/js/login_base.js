@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
         const messageDiv = document.getElementById('login-message');
-        const submitButton = loginForm.querySelector('button');
+        const submitButton = document.getElementById('login-button');
 
         // 3. Preparar la UI para la petición: deshabilitar botón, limpiar mensajes.
         submitButton.disabled = true;

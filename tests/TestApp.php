@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__) . '/lib/App.php';
+require_once dirname(__DIR__) . '/lib/LayerResolver.php';
 
 require_once dirname(__DIR__) . '/lib/components/Component.php';
 require_once dirname(__DIR__) . '/lib/components/Service.php';
@@ -8,16 +9,16 @@ require_once dirname(__DIR__) . '/1base/services/AuthService.php';
 require_once dirname(__DIR__) . '/1base/factories/ModelFactory.php';
 require_once dirname(__DIR__) . '/3audi/factories/ModelFactory.php';
 
-// Un AuthService falso que siempre "autentica" a un usuario de prueba.
+// Un AuthService falso que siempre "autentica" a un usuario de prueba. Nos permite modificar la App real a placer
 class FakeAuthService extends AuthService_Base
 {
     private $fakeUser;
     private $fakeUserLayer;
     private $fakeUserLevel;
 
-    public function __construct(App $app, $fakeUser = ['id_user' => 1, 'id_dealer' => 1, 'name' => 'Test User'], int $fakeUserLayer=3, int $fakeUserLevel=3)
+    public function __construct(LayerResolver $layerResolver, int $fakeUserLayer=3, int $fakeUserLevel=3, $fakeUser = ['id_user' => 1, 'id_dealer' => 1, 'name' => 'Test User'])
     {
-        parent::__construct($app); 
+        parent::__construct($layerResolver); 
         $this->fakeUser = (object)$fakeUser;
         $this->fakeUserLayer = $fakeUserLayer;
         $this->fakeUserLevel = $fakeUserLevel;
@@ -27,9 +28,9 @@ class FakeAuthService extends AuthService_Base
     public function authenticateRequest(array $routeInfo): array
     {
         // Simula que el usuario está logueado
-        $this->app->setContext('user', $this->fakeUser);
-        $this->app->setUserLayer($this->fakeUserLayer); // Capa máxima para el test
-        $this->app->setUserLevel($this->fakeUserLevel); // Nivel del usuario
+        App::getInstance()->setContext('user', $this->fakeUser);
+        App::getInstance()->setUserLayer($this->fakeUserLayer); // Capa máxima para el test
+        App::getInstance()->setUserLevel($this->fakeUserLevel); // Nivel del usuario
         
         // Devuelve la ruta sin validación, asumiendo que el acceso está concedido.
         return $routeInfo;
@@ -39,9 +40,9 @@ class FakeAuthService extends AuthService_Base
 class FakeModelFactory_3Audi extends ModelFactory_3Audi{
     private PDO $testPdo;
 
-    public function __construct(App $app, PDO $testPdo)
+    public function __construct(LayerResolver $layerResolver, PDO $testPdo)
     {
-        parent::__construct($app);
+        parent::__construct($layerResolver);
         $this->testPdo = $testPdo;
     }
     
@@ -54,9 +55,9 @@ class FakeModelFactory_3Audi extends ModelFactory_3Audi{
 class FakeModelFactory_Base extends ModelFactory_Base{
     private PDO $testPdo;
 
-    public function __construct(App $app, PDO $testPdo)
+    public function __construct(LayerResolver $layerResolver, PDO $testPdo)
     {
-        parent::__construct($app);
+        parent::__construct($layerResolver);
         $this->testPdo = $testPdo;
     }
     
@@ -68,44 +69,20 @@ class FakeModelFactory_Base extends ModelFactory_Base{
 
 class TestApp extends App
 {
-    public $fakeUser = ['id_user' => 1, 'id_dealer' => 1, 'name' => 'Test User'];
-    public $fakeUserLayer = 3;
-    public $fakeUserLevel = 3;
-    public $fakePDO;
+    public static $fakeUser = ['id_user' => 1, 'id_dealer' => 1, 'name' => 'Test User'];
+    public static $fakeUserLayer = 3;
+    public static $fakeUserLevel = 3;
 
-    // ¡La magia! Sobrescribimos el constructor de servicios.
-    public function buildService(string $serviceName)
-    {
-        require_once 'lib/components/Service.php';
-        //lo lanzamos antes para cargar correctamente el archivo 
-        if ($serviceName === 'AuthService') {
-            // ...le devolvemos nuestra versión falsa, inyectándole el usuario de prueba.
-            $fakeAuth = new FakeAuthService($this, $this->fakeUser, $this->fakeUserLayer, $this->fakeUserLevel);
-            $this->cachedComponents['AuthService'] = $fakeAuth;
-            return $fakeAuth;
-        }
-        
-        // Para cualquier otro servicio, que se comporte como la clase padre.
-        $service = parent::buildService($serviceName);
-        return $service;
+    public static function getFakeUser() {
+        return self::$fakeUser;
     }
 
-    public function getComponent(string $type, string $name, array $constructorArgs = [], ?int $userLayer = null, bool $exactLayerOnly = false): object
-    {
-        if ($type === 'factory' && $name === 'ModelFactory') {
-            if (!$this->fakePDO) {
-                throw new \RuntimeException("La propiedad fakePDO no ha sido configurada en TestApp.");
-            }
+    public static function getFakeUserLayer() {
+        return self::$fakeUserLayer;
+    }
 
-            if ($this->fakeUserLayer >= 3) return new FakeModelFactory_3Audi($this, $this->fakePDO); //devolvemos máxima capa
-            
-            return new FakeModelFactory_Base($this, $this->fakePDO);
-            
-        }
-        
-        // Para cualquier otro componente, que se comporte como la clase padre.
-        $component = parent::getComponent($type, $name, $constructorArgs, $userLayer, $exactLayerOnly);
-        return $component;
+    public static function getFakeUserLevel() {
+        return self::$fakeUserLevel;
     }
 
     protected function sendResponse(Response $response)
@@ -146,5 +123,49 @@ class TestApp extends App
             echo $content;
         }
         
+    }
+}
+
+class TestLayerResolver extends LayerResolver{
+    public $fakePDO;
+
+    // ¡La magia! Sobrescribimos el constructor de servicios.
+    public function buildService(string $serviceName)
+    {
+        require_once 'lib/components/Service.php';
+        //lo lanzamos antes para cargar correctamente el archivo 
+        if ($serviceName === 'AuthService') {
+            // ...le devolvemos nuestra versión falsa, inyectándole el usuario de prueba.
+            $fakeAuth = new FakeAuthService(
+                $this, 
+                TestApp::getFakeUserLayer(), 
+                TestApp::getFakeUserLevel(),
+                TestApp::getFakeUser(), 
+            );
+            $this->cachedComponents['AuthService'] = $fakeAuth;
+            return $fakeAuth;
+        }
+        
+        // Para cualquier otro servicio, que se comporte como la clase padre, nuestra App real.
+        $service = parent::buildService($serviceName);
+        return $service;
+    }
+
+    public function getComponent(string $type, string $name, array $constructorArgs = [], ?int $userLayer = null, bool $exactLayerOnly = false): object
+    {
+        if ($type === 'factory' && $name === 'ModelFactory') {
+            if (!$this->fakePDO) {
+                throw new \RuntimeException("La propiedad fakePDO no ha sido configurada en TestApp.");
+            }
+
+            if (TestApp::getFakeUserLayer() >= 3) return new FakeModelFactory_3Audi($this, $this->fakePDO); //devolvemos máxima capa
+            
+            return new FakeModelFactory_Base($this, $this->fakePDO);
+            
+        }
+        
+        // Para cualquier otro componente, que se comporte como la clase padre.
+        $component = parent::getComponent($type, $name, $constructorArgs, $userLayer, $exactLayerOnly);
+        return $component;
     }
 }

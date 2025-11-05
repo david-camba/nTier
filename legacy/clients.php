@@ -14,7 +14,7 @@ require_once __DIR__ . '/utils/database.php';
 // Lógica de traducción, etc. (como la teníamos antes)
 $lang = $_GET['lang'] ?? $_COOKIE['lang'] ?? 'en';
 // ...here we can use the new "TranslatorService" because "App" is accesible in legacy script as "$this"
-$translator = $this->buildComponent('service', "TranslatorService");
+$translator = $this->layerResolver->buildComponent('service', "TranslatorService");
 
 // 2. Obtener la conexión.
 $pdo = get_db_connection_dealer();
@@ -46,7 +46,7 @@ if (isset($_GET['conf_session'])) {
 
     // 3. Realizar las validaciones.
 
-    $confService = $this->buildComponent('service', "ConfiguratorService");
+    $confService = $this->layerResolver->buildComponent('service', "ConfiguratorService");
 
     if (!$confSession) {        
         $errorMessageAssign = $translator->get('clients_error_no_session');
@@ -246,150 +246,153 @@ if (isset($_GET['client_id'])) {
 
 </style>
 
-<h1><?= htmlspecialchars($translator->get('clients_title')) ?></h1>
+<div class="legacy-client-container">
 
-<a href="/app" class="back-to-app-button">
-    &larr; <?= htmlspecialchars($translator->get('backmenu_tag')) ?>
-</a>
+    <h1><?= htmlspecialchars($translator->get('clients_title')) ?></h1>
 
-<!-- ¡NUEVO! Envolvemos todo en un div para el posicionamiento -->
-<div class="autocomplete-container">
-    <form id="search-form" autocomplete="off"> <!-- autocomplete="off" evita el autocompletado del navegador -->
-        <input type="text" id="search-box" placeholder="<?= htmlspecialchars($translator->get('clients_search')) ?>">
-    </form>
+    <a href="/app" class="back-to-app-button">
+        &larr; <?= htmlspecialchars($translator->get('backmenu_tag')) ?>
+    </a>
 
-    <!-- La lista de resultados irá aquí. Empezará oculta. -->
-    <div id="results-container" class="autocomplete-results"></div>
-</div>
+    <!-- ¡NUEVO! Envolvemos todo en un div para el posicionamiento -->
+    <div class="autocomplete-container">
+        <form id="search-form" autocomplete="off"> <!-- autocomplete="off" evita el autocompletado del navegador -->
+            <input type="text" id="search-box" placeholder="<?= htmlspecialchars($translator->get('clients_search')) ?>">
+        </form>
 
-<?php if (!$selectedClient): ?>
-    <p style="font-weight:bold;font-size:20px"><?= htmlspecialchars($translator->get($introMessage)) ?></p>
-<?php endif; ?>
-
-<?php if ($errorMessageAssign): ?>
-    <p style="font-weight:bold;font-size:20px;color:red"><?= htmlspecialchars($errorMessageAssign) ?></p>
-<?php endif; ?>
-<?php if ($successMessage): ?>
-    <p style="font-weight:bold;font-size:20px;color:green"><?= htmlspecialchars($successMessage) ?></p>
-<?php endif; ?>
-<?php if (isset($summaryData)): ?>
-     <div style="display:flex;justify-content:center;gap:20px;margin:10px auto;font-family:sans-serif;font-size:14px;">
-        <!-- Columna izquierda: Modelo y Color -->
-        <div style="width:40%;">
-            <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;">
-                <tr>
-                    <th colspan="2" style="text-align:left;background:#f4f4f4;">Modelo</th>
-                </tr>
-                <tr><td>Nombre</td><td><?= htmlspecialchars($summaryData['model']['name']) ?></td></tr>
-                <tr><td>Precio</td><td><?= number_format($summaryData['model']['price'], 2, ',', '.') ?> €</td></tr>
-                <tr><td>Emisiones</td><td><?= htmlspecialchars($summaryData['model']['emissions']) ?> g/km</td></tr>
-
-                <tr>
-                    <th colspan="2" style="text-align:left;background:#f4f4f4;">Color</th>
-                </tr>
-                <tr><td>Nombre</td><td><?= htmlspecialchars($summaryData['color']['name']) ?></td></tr>
-                <tr><td>Precio</td><td><?= number_format($summaryData['color']['price'], 2, ',', '.') ?> €</td></tr>
-            </table>
-        </div>
-
-        <!-- Columna derecha: Extras -->
-        <div style="width:40%;">
-            <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;">
-                <tr>
-                    <th colspan="2" style="text-align:left;background:#f4f4f4;">Extras</th>
-                </tr>
-                <?php foreach ($summaryData['extras'] as $extra): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($extra['name']) ?></td>
-                        <td><?= number_format($extra['price'], 2, ',', '.') ?> €</td>
-                    </tr>
-                <?php endforeach; ?>
-            </table>
-        </div>
+        <!-- La lista de resultados irá aquí. Empezará oculta. -->
+        <div id="results-container" class="autocomplete-results"></div>
     </div>
 
-    <!-- Total -->
-    <p style="text-align:center;font-weight:bold;font-size:16px;margin-top:15px;">
-        Total: <?= number_format($totalPrice, 2, ',', '.') ?> €
-    </p>
-<?php endif; ?>
- <!-- --- ¡NUEVA SECCIÓN DE DETALLES DEL CLIENTE! --- -->    
-    <!-- 3. Comprobamos si la variable $selectedClient tiene datos. -->
-    <?php if ($selectedClient): ?>
-        <h2><?= htmlspecialchars($translator->get('clients_details')) ?></h2>
-        <!-- --- ¡NUEVO! LÓGICA PARA MOSTRAR EL BOTÓN DE ASIGNAR PROPUESTA --- -->
-        <?php if ($isAssignmentMode && empty($errorMessageAssign) && empty($confSession['assigned'])): ?>
-            <form method="POST" action="?conf_session=<?= htmlspecialchars($confSessionId) ?>&client_id=<?= htmlspecialchars($selectedClient['client_id']) ?>" class="assign-form">
-                <input type="hidden" name="client_id" value="<?= htmlspecialchars($selectedClient['client_id']) ?>">
-                <button type="submit" name="assign_proposal" class="assign-button">
-                    Asignar Propuesta
-                </button>
-            </form>            
-        <?php endif; ?>
-    
-
-        <table border="1" cellpadding="10" cellspacing="0" style="width: 100%;">
-            <tbody>
-                <tr>
-                    <th align="left"><?= htmlspecialchars($translator->get('name_tag')) ?></th>
-                    <td><?= htmlspecialchars($selectedClient['name']) ?></td>
-                </tr>
-                <tr>
-                    <th align="left"><?= htmlspecialchars($translator->get('adress_tag')) ?></th>
-                    <td><?= htmlspecialchars($selectedClient['address']) ?></td>
-                </tr>
-                <tr>
-                    <th align="left"><?= htmlspecialchars($translator->get('age_tag')) ?></th>
-                    <td><?= htmlspecialchars($selectedClient['age']) ?></td>
-                </tr>
-
-                <?php if ($layerUser>=3): ?> <!-- ONLY FOR AUDI -->
-                <tr>
-                    <th align="left"><?= htmlspecialchars($translator->get('salary_tag')) ?></th>
-                    <td><?= number_format($selectedClient['estimated_salary'], 2, ',', '.') ?> €</td>
-                </tr>
-                <?php endif; ?>
-
-                <tr>
-                    <th align="left"><?= htmlspecialchars($translator->get('financing_tag')) ?></th>
-                    <td><?= $selectedClient['has_financing_access'] ? 'Sí' : 'No' ?></td>
-                </tr>
-                <tr>
-                    <th align="left"><?= htmlspecialchars($translator->get('registrationdate_tag')) ?></th>
-                    <td><?= htmlspecialchars($selectedClient['created_at']) ?></td>
-                </tr>
-            </tbody>
-        </table>
-
-    <!-- --- ¡NUEVA SECCIÓN DE PROPUESTAS! --- -->
-        <h2><?= htmlspecialchars($translator->get('clients_proposals_title')) ?></h2>
-        
-        <!-- 3. Comprobamos si el array $clientProposals tiene datos -->
-        <?php if ($levelUser>1): ?> <!-- only for managers and above section -->
-            <?php if (!empty($clientProposals)): ?>
-                <table border="1" cellpadding="10" cellspacing="0" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th><?= htmlspecialchars($translator->get('totalprice_tag')) ?></th>
-                            <th><?= htmlspecialchars($translator->get('proposaldate_tag')) ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Iteramos sobre cada propuesta y creamos una fila -->
-                        <?php foreach ($clientProposals as $proposal): ?>
-                            <tr>
-                                <td><?= number_format($proposal['total_price'], 2, ',', '.') ?> €</td>
-                                <td><?= htmlspecialchars($proposal['created_at']) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <!-- Si el array está vacío, mostramos el mensaje -->
-                <p><i><?= htmlspecialchars($translator->get('clients_no_proposals')) ?></i></p>
-            <?php endif; ?>
-        <?php else: ?>
-            <p><i><?= htmlspecialchars($translator->get('clients_only_managers')) ?></i></p>
-        <?php endif; ?>
+    <?php if (!$selectedClient): ?>
+        <p style="font-weight:bold;font-size:20px"><?= htmlspecialchars($translator->get($introMessage)) ?></p>
     <?php endif; ?>
+
+    <?php if ($errorMessageAssign): ?>
+        <p style="font-weight:bold;font-size:20px;color:red"><?= htmlspecialchars($errorMessageAssign) ?></p>
+    <?php endif; ?>
+    <?php if ($successMessage): ?>
+        <p style="font-weight:bold;font-size:20px;color:green"><?= htmlspecialchars($successMessage) ?></p>
+    <?php endif; ?>
+    <?php if (isset($summaryData)): ?>
+        <div style="display:flex;justify-content:center;gap:20px;margin:10px auto;font-family:sans-serif;font-size:14px;">
+            <!-- Columna izquierda: Modelo y Color -->
+            <div style="width:40%;">
+                <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;">
+                    <tr>
+                        <th colspan="2" style="text-align:left;background:#f4f4f4;">Modelo</th>
+                    </tr>
+                    <tr><td>Nombre</td><td><?= htmlspecialchars($summaryData['model']['name']) ?></td></tr>
+                    <tr><td>Precio</td><td><?= number_format($summaryData['model']['price'], 2, ',', '.') ?> €</td></tr>
+                    <tr><td>Emisiones</td><td><?= htmlspecialchars($summaryData['model']['emissions']) ?> g/km</td></tr>
+
+                    <tr>
+                        <th colspan="2" style="text-align:left;background:#f4f4f4;">Color</th>
+                    </tr>
+                    <tr><td>Nombre</td><td><?= htmlspecialchars($summaryData['color']['name']) ?></td></tr>
+                    <tr><td>Precio</td><td><?= number_format($summaryData['color']['price'], 2, ',', '.') ?> €</td></tr>
+                </table>
+            </div>
+
+            <!-- Columna derecha: Extras -->
+            <div style="width:40%;">
+                <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%;">
+                    <tr>
+                        <th colspan="2" style="text-align:left;background:#f4f4f4;">Extras</th>
+                    </tr>
+                    <?php foreach ($summaryData['extras'] as $extra): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($extra['name']) ?></td>
+                            <td><?= number_format($extra['price'], 2, ',', '.') ?> €</td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+            </div>
+        </div>
+
+        <!-- Total -->
+        <p style="text-align:center;font-weight:bold;font-size:16px;margin-top:15px;">
+            Total: <?= number_format($totalPrice, 2, ',', '.') ?> €
+        </p>
+    <?php endif; ?>
+    <!-- --- ¡NUEVA SECCIÓN DE DETALLES DEL CLIENTE! --- -->    
+        <!-- 3. Comprobamos si la variable $selectedClient tiene datos. -->
+        <?php if ($selectedClient): ?>
+            <h2><?= htmlspecialchars($translator->get('clients_details')) ?></h2>
+            <!-- --- ¡NUEVO! LÓGICA PARA MOSTRAR EL BOTÓN DE ASIGNAR PROPUESTA --- -->
+            <?php if ($isAssignmentMode && empty($errorMessageAssign) && empty($confSession['assigned'])): ?>
+                <form method="POST" action="?conf_session=<?= htmlspecialchars($confSessionId) ?>&client_id=<?= htmlspecialchars($selectedClient['client_id']) ?>" class="assign-form">
+                    <input type="hidden" name="client_id" value="<?= htmlspecialchars($selectedClient['client_id']) ?>">
+                    <button type="submit" name="assign_proposal" class="assign-button">
+                        Asignar Propuesta
+                    </button>
+                </form>            
+            <?php endif; ?>
+        
+
+            <table border="1" cellpadding="10" cellspacing="0" style="width: 100%;">
+                <tbody>
+                    <tr>
+                        <th align="left"><?= htmlspecialchars($translator->get('name_tag')) ?></th>
+                        <td><?= htmlspecialchars($selectedClient['name']) ?></td>
+                    </tr>
+                    <tr>
+                        <th align="left"><?= htmlspecialchars($translator->get('adress_tag')) ?></th>
+                        <td><?= htmlspecialchars($selectedClient['address']) ?></td>
+                    </tr>
+                    <tr>
+                        <th align="left"><?= htmlspecialchars($translator->get('age_tag')) ?></th>
+                        <td><?= htmlspecialchars($selectedClient['age']) ?></td>
+                    </tr>
+
+                    <?php if ($layerUser>=3): ?> <!-- ONLY FOR AUDI -->
+                    <tr>
+                        <th align="left"><?= htmlspecialchars($translator->get('salary_tag')) ?></th>
+                        <td><?= number_format($selectedClient['estimated_salary'], 2, ',', '.') ?> €</td>
+                    </tr>
+                    <?php endif; ?>
+
+                    <tr>
+                        <th align="left"><?= htmlspecialchars($translator->get('financing_tag')) ?></th>
+                        <td><?= $selectedClient['has_financing_access'] ? 'Sí' : 'No' ?></td>
+                    </tr>
+                    <tr>
+                        <th align="left"><?= htmlspecialchars($translator->get('registrationdate_tag')) ?></th>
+                        <td><?= htmlspecialchars($selectedClient['created_at']) ?></td>
+                    </tr>
+                </tbody>
+            </table>
+
+        <!-- --- ¡NUEVA SECCIÓN DE PROPUESTAS! --- -->
+            <h2><?= htmlspecialchars($translator->get('clients_proposals_title')) ?></h2>
+            
+            <!-- 3. Comprobamos si el array $clientProposals tiene datos -->
+            <?php if ($levelUser>1): ?> <!-- only for managers and above section -->
+                <?php if (!empty($clientProposals)): ?>
+                    <table border="1" cellpadding="10" cellspacing="0" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th><?= htmlspecialchars($translator->get('totalprice_tag')) ?></th>
+                                <th><?= htmlspecialchars($translator->get('proposaldate_tag')) ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Iteramos sobre cada propuesta y creamos una fila -->
+                            <?php foreach ($clientProposals as $proposal): ?>
+                                <tr>
+                                    <td><?= number_format($proposal['total_price'], 2, ',', '.') ?> €</td>
+                                    <td><?= htmlspecialchars($proposal['created_at']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <!-- Si el array está vacío, mostramos el mensaje -->
+                    <p><i><?= htmlspecialchars($translator->get('clients_no_proposals')) ?></i></p>
+                <?php endif; ?>
+            <?php else: ?>
+                <p><i><?= htmlspecialchars($translator->get('clients_only_managers')) ?></i></p>
+            <?php endif; ?>
+        <?php endif; ?>
+</div>
 <script src="/legacy/js/clients.js"></script>

@@ -7,6 +7,7 @@ if (!defined('BASE_PATH')) {
 }
 
 require_once BASE_PATH . '/lib/App.php';
+require_once BASE_PATH . '/lib/LayerResolver.php';
 require_once BASE_PATH . '/lib/components/Component.php';
 require_once BASE_PATH . '/lib/components/Service.php';
 require_once BASE_PATH . '/lib/components/ORM.php';
@@ -33,7 +34,7 @@ class ConfiguratorCalculateTest extends TestCase
     private MockObject|Extra $extraModelMock;
     private MockObject|ConfSession $confSessionMock; // Solo para type-hinting, se recrea en cada test
 
-    private MockObject|App $appMock; // Necesitamos mockear App para el constructor de ConfSession_Base
+    private MockObject|LayerResolver $layerResolverMock; // Necesitamos mockear App para el constructor de ConfSession_Base
     private MockObject|PDO $pdoMock; // Necesitamos mockear PDO para el constructor de ConfSession_Base
 
     /**
@@ -51,7 +52,7 @@ class ConfiguratorCalculateTest extends TestCase
         // El mock de ConfSession se crea dentro de cada test porque sus propiedades cambian.
         $this->confSessionMock = $this->createMock(ConfSession_Base::class);
 
-        $this->appMock = $this->createMock(App::class); // Mockeamos App
+        $this->layerResolverMock = $this->createMock(LayerResolver::class); // Mockeamos App
         $this->pdoMock = $this->createMock(PDO::class); // Mockeamos PDO        
 
         // 2. Instanciar la clase que vamos a probar (SUT - Subject Under Test),
@@ -82,7 +83,7 @@ class ConfiguratorCalculateTest extends TestCase
         $this->carModelMock   = \Mockery::mock(CarModel_Base::class);
         $this->colorModelMock = \Mockery::mock(Color_Base::class);
         $this->extraModelMock = \Mockery::mock(Extra_Base::class);
-        $this->appMock        = \Mockery::mock(App::class);
+        $this->layerResolverMock        = \Mockery::mock(LayerResolver::class);
         $this->pdoMock        = \Mockery::mock(PDO::class);
 
         $this->service = new ConfiguratorService_Base(
@@ -94,40 +95,56 @@ class ConfiguratorCalculateTest extends TestCase
         );
     }
 
-    public function testCalculateTotalWithOnlyModel(): void
+    //Mockeamos el nuevo método "getPriceDetails"
+    public function testGetPriceDetailsWithOnlyModel(): void
     {
         // ARRANGE (Preparar el escenario)
         // 1. Configurar la sesión de prueba: solo tiene un ID de modelo.
-        $this->confSessionMock = new ConfSession_Base($this->appMock, $this->pdoMock);
+        $this->confSessionMock = new ConfSession_Base($this->layerResolverMock, $this->pdoMock);
         $this->confSessionMock->id_model = 1;
         $this->confSessionMock->id_color = null;
         $this->confSessionMock->extras = null;
 
         // 2. Simular el objeto CarModel que el servicio esperaría de la base de datos.
-        $mockedCarModel = (object)['price' => 50000.00];
+        
 
         // 3. Instruir a nuestro mock del modelo para que, cuando se llame a su método `find(1)`,
         // devuelva nuestro objeto simulado.
         // NOTA: Probamos el método `getCarModelPrice` indirectamente a través de `calculateTotal`.
+        
+        // El mock de CarModel se devuelve a sí mismo al hacer find(1),
+        // para permitir encadenar __get('price') y toArray() sobre el mismo objeto.
         $this->carModelMock
             ->expects($this->once())
             ->method('find')
             ->with(1)
-            ->willReturn($mockedCarModel);
+            ->willReturn($this->carModelMock);
+
+        $this->carModelMock
+            ->expects($this->once())
+            ->method('__get')
+            ->with('price')
+            ->willReturn(50000.00);
+
+        $mockedCarModelToArray = ['price' => 50000.00];
+        $this->carModelMock
+            ->expects($this->once())
+            ->method('toArray')
+            ->willReturn($mockedCarModelToArray);
 
         // ACT (Ejecutar la acción)
         // Llamar al método que queremos probar con la sesión configurada.
-        $total = $this->service->calculateTotal($this->confSessionMock);
+        $priceDetails = $this->service->getPriceDetails($this->confSessionMock);
 
         // ASSERT (Verificar el resultado)
         // Comprobar que el total calculado es el esperado.
-        $this->assertEquals(50000.00, $total);
+        $this->assertEquals(50000.00, $priceDetails['total']);
     }
 
     public function testCalculateTotalWithModelAndColor(): void
     {
         // ARRANGE
-        $this->confSessionMock = new ConfSession_Base($this->appMock, $this->pdoMock);
+        $this->confSessionMock = new ConfSession_Base($this->layerResolverMock, $this->pdoMock);
         $this->confSessionMock->id_model = 1;
         $this->confSessionMock->id_color = 10;
         $this->confSessionMock->extras = null;
@@ -197,7 +214,7 @@ class ConfiguratorCalculateTest extends TestCase
     public function testCalculateTotalReturnsZeroWhenSessionIsEmpty(): void
     {
         // ARRANGE
-        $this->confSessionMock = new ConfSession_Base($this->appMock, $this->pdoMock);
+        $this->confSessionMock = new ConfSession_Base($this->layerResolverMock, $this->pdoMock);
         $this->confSessionMock->id_model = null;
         $this->confSessionMock->id_color = null;
         $this->confSessionMock->extras = null;
@@ -212,7 +229,7 @@ class ConfiguratorCalculateTest extends TestCase
     public function testCalculateTotalIgnoresEmptyExtrasString(): void
     {
         // ARRANGE
-        $this->confSessionMock = new ConfSession_Base($this->appMock, $this->pdoMock);
+        $this->confSessionMock = new ConfSession_Base($this->layerResolverMock, $this->pdoMock);
         $this->confSessionMock->id_model = 1;
         $this->confSessionMock->id_color = null;
         $this->confSessionMock->extras = ''; // Un string vacío
@@ -233,7 +250,7 @@ class ConfiguratorCalculateTest extends TestCase
     public function testCalculateTotalHandlesNonExistentColorGracefully(): void
     {
         // ARRANGE
-        $this->confSessionMock = new ConfSession_Base($this->appMock, $this->pdoMock);
+        $this->confSessionMock = new ConfSession_Base($this->layerResolverMock, $this->pdoMock);
         $this->confSessionMock->id_model = 1;
         $this->confSessionMock->id_color = 999; // Un color que no existirá
         $this->confSessionMock->extras = null;

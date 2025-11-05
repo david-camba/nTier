@@ -8,6 +8,7 @@ return [
     'login_form_username_placeholder' => 'Username',
     'login_form_password_placeholder' => 'Password',
     'login_form_submit_button' => 'Login',
+    'login_form_guest_access' => 'Continue as guest',
     'login_translation_message' => 'Choose language:',    
     'login_userlevel_warning' => 'IMPORTANT: You cannot have a User Level (Seller, Manager, etc.) unless you are logged in. And please, definitely don’t use the debug panel for that 😉',
     'login_userlevel_joke' => 'Okay, you actually used it... looks like the layer architecture can handle even this 😄',  
@@ -20,8 +21,8 @@ return [
 
     // --- Dashboard & Layout ---
     'menu_dashboard' => 'Dashboard',
-    'menu_configurator' => 'Configurator',
-    'menu_clients_legacy' => 'Clients (Legacy)',
+    'menu_configurator' => 'Order Configurator - powered by LifeTree.js',
+    'menu_clients_legacy' => 'Clients (Legacy Integration)',
     'menu_user_management' => 'User Management',
     'menu_report' => 'Report (only for managers)',
     'user_greeting' => 'Hello',
@@ -32,7 +33,7 @@ return [
     'dashboard_welcome_message_manager' => 'Welcome back! You’re the best manager ever.',
 
     'views_layer_message' => '"The layer system allows creating child views in superior layers not only of the main view itself, but also of the templates it imports.", said the imported template in layer 3.',
-    'dashboard_vw_message' => 'VOLKSWAGEN cares about clean energy.<br><i style="color: lightgreen;">Reminder: our focus should always be on reducing emissions</i> <br>Reminder sponsored by the main view in layer 2.',
+    'dashboard_vw_message' => 'VOLKSWAGEN cares about clean energy.<br><i style="color: lightgreen;">Reminder: our focus should always be on reducing emissions.</i> Reminder sponsored by the main view in layer 2.',
     'dashboard_manager_message' => 'You are the manager of the year!',
 
     'report_team_title' => 'These people work for you, they are awesome.',
@@ -69,7 +70,7 @@ return [
     'role_S' => 'Seller',
 
     // --- Configurator Page ---
-    'configurator_title' => 'Vehicle Configurator',
+    'configurator_title' => 'Order Configurator',
     'configurator_templates_label' => 'Load template:',
     'configurator_templates_default_option' => 'Select a template',
     'configurator_no_templates_message' => 'You have no saved templates.',
@@ -86,13 +87,19 @@ return [
     'configurator_next_button' => 'Next',
     'configurator_loading_colors' => 'Loading colors...',
     'configurator_back_button' => 'Back',
+    'configurator_extras_picker_title'     => 'Choose as many extras as you want',
+    'configurator_model_card_price_prefix' => 'From ',
+    'configurator_model_picker_title'      => 'Choose your favorite model',
+    'configurator_summary_title'           => 'Purchase Summary',
+    'configurator_summary_final_price'     => 'Final Price',
+    'configurator_summary_no_extras'       => 'No extras selected',
 
     // --- Color Names ---
     'color.black_mythos' => 'Mythos Black',
     'color.silver_floret' => 'Floret Silver',
     'color.white_glacier' => 'Glacier White',
     'color.black_orca' => 'Orca Black',
-    'color.red_matador' => 'Matador Red',
+    'color.red_matador' => 'Passion Red',
     'color.silver_cuvee' => 'Cuvée Silver',
     'color.white_ibis' => 'Ibis White',
 
@@ -131,4 +138,11 @@ return [
     'clients_success_assigned' => 'Proposal successfully assigned to the client!',
     'clients_error_assign_failed' => 'Error assigning the proposal. Please try again.',
     'clients_error_invalid_configuration' => 'Error: The configuration is invalid. Make sure the model and color are assigned.',
+
+    'banner_github_invitation' => 'github.com/nTier-backend-framework',
+    'banner_github_invitation_tree' => 'github.com/LifeTree-frontend-framework',
+    'banner_little_prince' => 'What is essential is invisible to the eye. - The Little Prince',
+    'banner_lifetree_quote' => 'Trees are poems the earth writes upon the sky. - Kahlil Gibran',
+
+    'login_explanation' => '(en ingles) Aqui la explicación que quiera',
 ];

@@ -8,6 +8,7 @@ return [
     'login_form_username_placeholder' => 'Nombre de Usuario',
     'login_form_password_placeholder' => 'Contraseña',
     'login_form_submit_button' => 'Acceder',
+    'login_form_guest_access' => 'Continuar como invitado',
     'login_translation_message' => 'Elige idioma:', 
 
     // --- Mensajes de la API de Login ---
@@ -21,8 +22,8 @@ return [
 
      // --- Dashboard & Layout ---
     'menu_dashboard' => 'Dashboard',
-    'menu_configurator' => 'Configurador',
-    'menu_clients_legacy' => 'Clientes (Legacy)',
+    'menu_configurator' => 'Configurador de Pedidos - powered by LifeTree.js',
+    'menu_clients_legacy' => 'Clientes (Legacy Integration)',
     'menu_user_management' => 'Gestión de Usuarios', // 'User Management'
     'menu_report' => 'Informe (solo para managers)', // 'Reports'
     'user_greeting' => 'Hola',
@@ -30,7 +31,7 @@ return [
     'dashboard_title' => 'Panel Principal',
     'dashboard_welcome_message' => '¡Hola de nuevo! Ojalá hoy vendas muchísimo.',
     'dashboard_welcome_message_manager' => '¡Hola de nuevo! Eres el mejor manager del mundo.',
-    'dashboard_vw_message' => 'VOLKSWAGEN se preocupa por una energía limpia.<br><i style="color: lightgreen;">Recordatorio: nuestro foco siempre debe ser reducir las emisiones</i> <br>Recordatorio patrocinado por la vista principal en la capa 2.',
+    'dashboard_vw_message' => 'VOLKSWAGEN se preocupa por una energía limpia. <i style="color: lightgreen;">Recordatorio: nuestro foco siempre debe ser reducir las emisiones</i>. Recordatorio patrocinado por la vista principal en la capa 2.',
     
 
     'views_layer_message' => '"El sistema de capas permite crear vistas hijas en capas superiores no solo de la vista principal, sino también de las plantillas que esta importa." - dijo la plantilla importada de la capa 3',
@@ -70,7 +71,7 @@ return [
     'role_S' => 'Vendedor/a',
 
     // --- Configurator Page ---
-    'configurator_title' => 'Configurador de Vehículo',
+    'configurator_title' => 'Configurador de Pedido',
     'configurator_templates_label' => 'Cargar plantilla:',
     'configurator_templates_default_option' => 'Seleccionar una plantilla',
     'configurator_no_templates_message' => 'No tienes plantillas guardadas.',
@@ -82,6 +83,12 @@ return [
     'configurator_price_label' => 'Precio Total Estimado',
     'configurator_save_template_button' => 'Guardar como Plantilla',
     'configurator_assign_client_button' => 'Asignar a Cliente',
+    'configurator_extras_picker_title' => 'Escoge tantos extras como quieras',
+    'configurator_model_card_price_prefix' => 'Desde ',
+    'configurator_model_picker_title' => 'Elige tu modelo favorito',
+    'configurator_summary_title' => 'Resumen de la compra',
+    'configurator_summary_final_price' => 'Precio Final',
+    'configurator_summary_no_extras' => 'Sin extras',
 
     'configurator_loading_models' => 'Cargando modelos...', 
     'configurator_next_button' => 'Siguiente', 
@@ -93,7 +100,7 @@ return [
     'color.silver_floret' => 'Plata Florete',
     'color.white_glacier' => 'Blanco Glaciar',
     'color.black_orca' => 'Negro Orca',
-    'color.red_matador' => 'Rojo Matador',
+    'color.red_matador' => 'Rojo Pasion',
     'color.silver_cuvee' => 'Plata Cuvée',
     'color.white_ibis' => 'Blanco Ibis',
 
@@ -126,12 +133,13 @@ return [
     'not_found_message' => 'Upps, no se encontró esta página... URL requested: %s',
     'go_back_main' => 'Volver a la página principal',
 
-    'clients_error_no_session' => 'Error: Esta configuración que intentas asignar no existe.',
-    'clients_error_not_owner' => 'Error: Esta sesión de configuración no le pertenece. No puede asignarla.',
-    'clients_warning_already_assigned' => 'Aviso: Esta configuración ya ha sido asignada a un cliente. No se puede volver a asignar, crea una nueva configuración.',
-    'clients_success_assigned' => '¡Propuesta asignada al cliente correctamente!',
-    'clients_error_assign_failed' => 'Error al asignar la propuesta. Por favor, inténtelo de nuevo.',
-    'clients_error_invalid_configuration' => 'Error: La configuración es incorrecta. Asegúrese de que el modelo y el color están asignados.',
+
+    'banner_github_invitation' => 'github.com/nTier-backend-framework',
+    'banner_github_invitation_tree' => 'github.com/LifeTree-frontend-framework',
+    'banner_little_prince' => 'Lo esencial es invisible a los ojos. - El Principito',
+    'banner_lifetree_quote' => 'Los árboles son poemas que la tierra escribe en el cielo. - Kahlil Gibran',
+
+    'login_explanation' => 'Framework MVCS (Modelo-Vista-Controlador-Servicios) multicapa vertical y horizontal hecho desde 0. Configurable, motor multicapa de inyección de dependencias y carga de archivos, Service Locator disponible, ORM propio, soporte de módulos legacy independientes, funcionalidades de autenticación y traducción, middleware, testing de integración y unitario, cacheo de vistas, factory de modelos para desacoplar a la DB y mucho mimo puesto en mejorar la experiencia del desarrollador en el manejo de capas. Routing.',
 
 
 ];

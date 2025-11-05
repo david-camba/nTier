@@ -36,7 +36,8 @@ abstract class Controller extends Component
     {
         // 1. Obtenemos el objeto View de la App.
         require_once 'lib/View.php';
-        $view = new View($viewName);
+
+        $view = new View($viewName, App::getInstance()->getLayerResolver()); //le pasamos el nombre y le inyectamos el "layerResolver"
 
         $this->injectDefaultAssets($view);
 
@@ -137,7 +138,7 @@ abstract class Controller extends Component
     /**
      * Enriquecer una respuesta JSON antes de enviarla
      */
-    function enrichJsonResponse(JsonResponse $response, array $extraFields = []): JsonResponse
+    protected function enrichJsonResponse(JsonResponse $response, array $extraFields = []): JsonResponse
     {
         // Obtener contenido de la respuesta original
         $data = $response->getContent();
@@ -147,6 +148,11 @@ abstract class Controller extends Component
 
         // Devolver la respuesta JSON final
         return $this->json($data);
+    }
+
+    protected function redirect(string $url, $statusCode = 200) : never
+    {
+        App::getInstance()->redirect($url, $statusCode);
     }
 
     /**

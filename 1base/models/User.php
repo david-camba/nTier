@@ -97,4 +97,48 @@ class User_Base extends ORM implements User
 
         return $level !== false ? (int)$level : null;
     }
+
+    public function createGuestUser(int $id_dealer): ?array
+    {
+        // 1. Instanciamos un nuevo objeto User.
+        $guest = $this;
+
+        // 2. Generamos datos únicos para el usuario invitado.
+        // Usamos uniqid() para asegurar que username y email no colisionen si se crean varios invitados.
+        $unique_id = 'guest_' . uniqid();
+        
+        // Generamos una contraseña aleatoria y segura para este usuario.
+        $plain_password = bin2hex(random_bytes(8)); // Crea una contraseña de 16 caracteres.
+
+        // 3. Asignamos las propiedades al objeto, como en tu ejemplo de `resetConfiguration`.
+        $guest->id_dealer = $id_dealer;
+        $guest->username  = $unique_id;
+        $guest->email     = $unique_id . '@example.com';
+        $guest->name      = 'Lovely Guest - ID: '.rand(0, 10000);
+        $guest->user_code      = 'M';
+        
+        // ¡Importante! Siempre guarda la contraseña hasheada en la base de datos.
+        // Tu lógica de login deberá usar password_verify() para comprobarla.
+        $guest->password = password_hash($plain_password, PASSWORD_DEFAULT);
+
+        // Los valores específicos que solicitaste para un usuario invitado.
+        $guest->user_layer = 3;
+        $guest->user_level = 2;
+        $guest->tries      = 0; // Inicializamos los intentos a 0.
+
+        $guest->created_at = (new DateTime('now', new DateTimeZone('Europe/Madrid')))->format('Y-m-d H:i:s');
+
+        // 4. Guardamos el nuevo usuario en la base de datos.
+        // Asumimos que tu método save() devuelve true en caso de éxito y false si falla.
+        if ($guest->save()) {
+            // 5. Si se guardó correctamente, devolvemos el objeto y la contraseña en texto plano.
+            return [
+                'username'     => $guest->username,
+                'password' => $plain_password
+            ];
+        }
+
+        // Si save() falló, retornamos null.
+        return null;
+    }
 }

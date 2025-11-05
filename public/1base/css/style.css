@@ -5,6 +5,10 @@ body, html {
     font-family: Arial, sans-serif;
 }
 
+/*Framework functionalities*/
+slot-container {display: block}
+component {display: block} 
+
 .background-container {
     /* La imagen de fondo se establece aquí desde el XML */
     height: 100%;
@@ -86,54 +90,124 @@ body, html {
 }
 
 .login-box button {
+    /* --- ESTRUCTURA (Mantenemos lo bueno) --- */
     width: 100%;
     padding: 12px;
-    border: none;
-    border-radius: 5px;
-    background-color: red;
-    color: white;
     font-size: 1.1em;
     font-weight: bold;
+    border: none;
+    border-radius: 6px; /* Ligeramente más redondeado */
     cursor: pointer;
-    transition: background-color 0.3s;
+
+    /* --- ESTILO (La magia visual) --- */
+    background-color: #007bff; /* Un azul principal, profesional y accesible */
+    color: white;
+    letter-spacing: 0.5px; /* Damos un poco de aire al texto */
+    
+    /* Sombra sutil para que "flote" sobre el fondo */
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    
+    /* Transición suave para todos los cambios */
+    transition: all 0.25s ease-in-out;
 }
 
 .login-box button:hover {
-    background-color: #005a9e;
+    background-color: #0056b3; /* Un azul más oscuro y profundo al pasar el ratón */
+    
+    /* Hacemos que el botón se eleve y la sombra se intensifique */
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
 }
 
-.language-selector {
+.login-box button:active {
+    /* Al hacer clic, el botón se "hunde" para dar feedback instantáneo */
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+/* --- HACK PARA SOBRESCRIBIR EL ESTILO AUTOFILL DE CHROME EN DARK MODE --- */
+
+#login-form input:-webkit-autofill,
+#login-form input:-webkit-autofill:hover, 
+#login-form input:-webkit-autofill:focus, 
+#login-form input:-webkit-autofill:active {
+    /* 1. "Pintamos" el fondo con una sombra interna gigante.
+       Esto cubre el color azul claro que pone el navegador. */
+    box-shadow: 0 0 0px 1000px #2c333e inset !important;
+    
+    /* 2. Forzamos el color del texto. 'color' a veces no funciona,
+       pero '-webkit-text-fill-color' es más específico. */
+    -webkit-text-fill-color: #cdd5e0 !important;
+    
+    /* 3. (Opcional) Un truco para suavizar la transición de color. */
+    transition: background-color 5000s ease-in-out 0s;
+    
+    /* 4. (Opcional) Mantenemos el borde y el resplandor del :focus */
+    border: 1px solid #4a5363;
+}
+
+/* Asegurarnos de que el :focus se vea bien incluso con autofill */
+#login-form input:-webkit-autofill:focus {
+    border-color: #58a6ff;
+    box-shadow: 0 0 0px 1000px #2c333e inset, /* Mantenemos el fondo oscuro */
+                0 0 0 3px rgba(88, 166, 255, 0.25) !important; /* Añadimos el resplandor */
+}
+
+/* --- Contenedor Principal --- */
+.login-page .language-selector {
+    /* La posición que pediste no tocar */
     position: absolute;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
     z-index: 10;
-    display: flex; /* Para alinear los elementos */
+    
+    /* Mejoras visuales */
+    display: flex;
     align-items: center;
-    padding: 10px;
-    background-color:black;
-}
-.language-selector a {
-    text-decoration: none;
-    margin-left: 10px;
-    display: inline-block;
-}
-.language-selector img {
-    width: 32px; /* Tamaño de la bandera */
-    height: auto;
-    border-radius: 3px; /* Bordes redondeados sutiles */
-    opacity: 0.7;
-    transition: opacity 0.3s, transform 0.3s;
-}
-.language-selector img:hover {
-    opacity: 1;
-    transform: scale(1.1); /* Efecto de zoom al pasar el ratón */
-}
-.language-selector span {
-    color: white;
-    font-size: 0.9em;
-    opacity: 0.8;
+    padding: 12px 20px;
+    border-radius: 8px; /* Bordes redondeados para un look moderno */
+    
+    /* El efecto "cristal tecnológico" que buscas */
+    background-color: rgba(10, 25, 40, 0.75); /* Un azul oscuro casi negro y semitransparente */
+    backdrop-filter: blur(10px); /* El efecto de desenfoque del fondo (¡la clave!) */
+    -webkit-backdrop-filter: blur(10px); /* Para compatibilidad con Safari */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Un borde sutil que atrapa la luz */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4); /* Sombra para darle profundidad */
 }
 
+/* --- El texto "Choose language:" --- */
+.login-page .language-selector span {
+    color: #EAEAEA; /* Un blanco suave, no tan estridente */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 0.9em;
+    font-weight: 400; /* Un grosor de letra estándar y legible */
+    margin-right: 5px; /* Espacio entre el texto y la primera bandera */
+}
+
+/* --- Enlaces de las banderas --- */
+.login-page .language-selector a {
+    text-decoration: none;
+    margin-left: 15px; /* Un poco menos de margen, más compacto */
+    display: inline-block;
+    line-height: 0; /* Evita espacios extra debajo de las imágenes */
+}
+
+/* --- Banderas (Imágenes) --- */
+.login-page .language-selector img {
+    width: 30px; /* Un tamaño ligeramente más pequeño y elegante */
+    height: auto;
+    border-radius: 4px; /* Bordes redondeados acordes al contenedor */
+    opacity: 0.7; /* Sutilmente atenuadas por defecto */
+    transition: all 0.3s ease; /* Transición suave para todos los efectos */
+}
+
+/* --- Efecto al pasar el ratón por encima (¡con el toque azul!) --- */
+.login-page .language-selector img:hover {
+    opacity: 1;
+    transform: scale(1.15); /* Hacemos el zoom un poco más notable */
+    /* El brillo azul tecnológico que querías */
+    box-shadow: 0 0 12px rgba(50, 150, 255, 0.8);
+}
 /* ==========================================================================
    Estilos Globales y Layout de la Aplicación (Dashboard)
    ========================================================================== */
@@ -163,7 +237,7 @@ body {
 /* --- Barra Lateral (Sidebar) --- */
 
 .sidebar {
-    width: 260px;
+    width: 400px;
     flex-shrink: 0; /* Evita que la barra lateral se encoja */
     background: rgba(10, 25, 41, 0.9); /* Un azul oscuro casi negro con transparencia */
     backdrop-filter: blur(10px); /* Efecto de desenfoque del fondo */
@@ -171,6 +245,10 @@ body {
     display: flex;
     flex-direction: column;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.page-order-configurator .sidebar{
+    width: 330px;
 }
 
 .sidebar-header {
@@ -188,6 +266,7 @@ body {
 }
 
 .main-menu ul {
+    padding-top: 30px !important;
     list-style: none;
     padding: 0;
     margin: 0;
@@ -213,13 +292,67 @@ body {
     color: #ffffff;
 }
 
-.main-menu .language-selector{
-    position:relative; 
-    background-color: rgba(0,0,0,0); 
-    padding:0; 
-    width: fit-content; 
-    margin:auto;
-    text-align: center;
+/* 1. El contenedor principal: ¡La magia de Flexbox! */
+.main-menu .language-selector {
+    /* Convertimos el div en un contenedor flexible */
+    display: flex;
+    /* Centramos los elementos verticalmente (el texto y las banderas) */
+    align-items: center;
+    /* Padding para que se alinee con los otros elementos del menú (ajusta si es necesario) */
+    padding: 0px 16px;
+    width: 100%;
+    box-sizing: border-box; /* Buena práctica */
+}
+
+/* 2. El texto "Choose language": ahora es un elemento de menú normal */
+.main-menu .language-selector span {
+    /* Hereda el color y estilo de los otros enlaces del menú.
+       Si no lo hace automáticamente, puedes forzarlo: color: #aeb9c5; */
+    font-size: 0.8em; /* Tamaño normal, como los otros elementos */
+    font-weight: normal; /* O el que usen los otros elementos */
+    text-transform: none; /* Quitamos el estilo de "etiqueta" mayúscula */
+    max-width: 130px;
+
+    /* IMPORTANTE: Hacemos que el texto ocupe todo el espacio disponible,
+       empujando las banderas hacia la derecha. */
+    flex-grow: 1; 
+    color: #a9b7c6;
+    text-decoration: underline;
+}
+
+/* 3. Los enlaces de las banderas: agrupados a la derecha */
+.main-menu .language-selector a {
+    padding: 0px;
+    width: fit-content;
+    display: inline-block;
+    line-height: 0; /* Evita espacios extra verticales */
+    margin-top: 3px !important;
+    margin-left: 0px !important;
+}
+
+/* Espacio solo ENTRE las banderas (se aplica al segundo 'a' y siguientes) */
+.main-menu .language-selector a + a {
+    margin-left: 15px !important;
+}
+
+/* 4. Las imágenes de las banderas: un poco más compactas y con el mismo efecto */
+.main-menu .language-selector img {
+    display: block;
+    width: 28px !important; /* Un tamaño más discreto y compacto */
+    opacity: 0.7;
+    transition: all 0.2s ease-in-out;
+    border-radius: 3px; /* Pequeño redondeo en las esquinas, queda muy bien */
+}
+
+/* 5. El efecto hover: ¡lo mantenemos porque es genial! */
+.main-menu .language-selector a:hover {
+    background: transparent !important; /* Mantenemos tu solución para evitar fondos no deseados */
+}
+
+.main-menu .language-selector img:hover {
+    opacity: 1;
+    transform: scale(1.15);
+    box-shadow: 0 0 12px rgba(80, 160, 255, 0.7);
 }
 
 .user-info {
@@ -263,7 +396,7 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding-bottom: 15px;
     margin-bottom: 30px;
-    text-align: center;
+    text-align: left;
 }
 
 .main-content p {
@@ -271,69 +404,397 @@ body {
     max-width: 800px; /* Mejora la legibilidad */
 }
 
-p.views-layer-message{
+p.views-layer-message {
+    /* 1. POSICIONAMIENTO (Mantenido) */
     position: absolute;
-    width: 40vw;
+    width: 450px; /* Ligeramente más estrecho para mejor composición */
     bottom: 0;
     left: 0;
-    margin-left: 23vw;
-    margin-bottom: 2vh;
-    font-size: 1.2vw; 
-    color: green;
-    padding: 1vw;
+    
+    /* Ajuste de márgenes */
+    margin-left: 790px;
+    margin-bottom: 50px;
+    
+    /* 2. ESTILO Y TIPOGRAFÍA */
+    font-size: clamp(1rem, 1.2vw, 1.5rem); /* Uso de clamp para responsividad controlada */
+    line-height: 1.4; /* Mejora la legibilidad */
+    
+    /* 3. COLORES Y FONDO (Actualizados) */
+    color: #e0e0e0; /* Verde neón/lima vibrante para un toque "fresco" y buen contraste */
+    background: rgba(18, 18, 18, 0.9); /* Negro casi opaco con un 90% de opacidad */
+    
+    /* 4. MEJORAS VISUALES */
+    padding: 1.5vw; /* Más relleno */
+    border-radius: 8px; /* Bordes redondeados sutiles */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Sombra suave para "levantar" el mensaje */
+    border-left: 4px solid #ccff00; /* Una línea lateral para acentuar */
+    backdrop-filter: blur(4px); /* (Solo si estás usando position: fixed o el elemento está sobre otro) */
 }
 
-.dashboard-vw-message{
-    background-color: black;
-    width: fit-content;
-    padding: 0.5em;
+.dashboard-vw-message {
+    /* 1. LAYOUT Y TAMAÑO */
+    width: 400px;
+    display: inline-block; /* Asegura que el padding funcione bien si no es block */
+    
+    /* 2. TIPOGRAFÍA Y ESPACIADO */
+    font-size: 1.0em; /* Ligeramente más pequeña, más elegante */
+    font-weight: 500; /* Ni negrita ni normal */
+    letter-spacing: 0.02em; /* Espaciado sutil para claridad */
+    line-height: 1; /* Para un contenedor compacto */
+    padding: 0.4em 0.8em; /* Relleno asimétrico: Vertical vs. Horizontal (se ve mejor) */
+    
+    /* 3. COLOR Y ESTILO */
+    color: #e0e0e0; /* Gris claro suave (mejor que blanco puro) */
+    background-color: #1a1a1aDD; /* Negro muy oscuro (mejor que negro puro) */
+    border-radius: 8px; /* Esquinas sutilmente redondeadas */
+    
+    /* 4. MEJORA VISUAL: Sombra sutil o borde de acento */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); /* Pequeña sombra para "levantar" */
+    
+    /* Si quieres un toque de color, puedes añadir una línea de acento */
+    border-left: 4px solid #007bff;
+
+    line-height: 1.6;
+}
+
+/* --- Estilos para el Debug Panel --- */
+
+/* Contenedor principal del panel */
+@keyframes purple-glow-pulse {
+    0% {
+        /* Estado inicial: sombra base normal */
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+    50% {
+        /* Punto álgido: sombra base más intensa Y un resplandor púrpura vibrante */
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), /* Sombra negra más pronunciada */
+                    0 0 35px rgba(179, 136, 255, 0.7); /* El resplandor púrpura */
+    }
+    100% {
+        /* Vuelta al estado inicial */
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+}
+
+#debug-panel-container {
+    /* --- POSICIÓN (como pediste) --- */
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999; /* Para que siempre esté por encima de todo */
+
+    /* --- ESTÉTICA DARK MODE MODERNO --- */
+    background-color: #151515EE; /* Un gris oscuro, no negro puro */
+    color: #f0f0f0; /* Texto blanco-grisáceo para buena legibilidad */
+    padding: 10px 20px;
+    border-radius: 12px; /* Bordes más redondeados y suaves */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); /* Sombra para que destaque */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    width: auto; /* Se ajusta al contenido */
+
+
+    animation: purple-glow-pulse 3s ease-in-out infinite;
+
+    /* (Opcional) Una transición para que el hover sea suave */
+    transition: all 0.3s ease;
+}
+/* 3. (Opcional pero recomendado) Mejoramos la interacción al pasar el ratón */
+#debug-panel-container:hover {
+    /* 1. Anulamos la animación por completo */
+    animation: none;
+    
+    /* 2. Reseteamos cualquier transformación a su estado original */
+    transform: scale(1);
+    
+    /* 3. (Opcional) Le damos una sombra base estática y limpia,
+       sin el resplandor, para indicar que está "en reposo". */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Título "Debug Panel" */
+#debug-panel-container strong {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #555; /* Línea divisoria sutil */
+}
+
+/* Formulario que contiene los inputs */
+#debug-form {
+    display: flex;
+    align-items: flex-end; /* Alinea los elementos por la base, queda mejor con el botón */
+    gap: 15px; /* Espacio entre los elementos */
+    margin-bottom: 8px;
+}
+
+/* Etiquetas (Layer Level, User Level) */
+#debug-form label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #b0b0b0; /* Un color más suave para las etiquetas */
+}
+
+/* Estilo común para los select y el botón */
+#debug-form select,
+#debug-form button {
+    background-color: #444;
+    color: #f0f0f0;
+    border: 1px solid #666;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease; /* Transición suave */
+}
+
+/* Estilo específico para los menús desplegables (select) */
+#debug-form select {
+    /* Quitamos la apariencia por defecto para poner la nuestra */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /* Añadimos nuestra propia flecha con SVG */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23b0b0b0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+    padding-right: 35px; /* Espacio extra para que el texto no se monte sobre la flecha */
+}
+
+/* Efecto hover (cuando el ratón está encima) */
+#debug-form select:hover,
+#debug-form button:hover {
+    background-color: #555;
+    border-color: #888;
+}
+
+/* El botón no necesita margen superior si usamos flex-end */
+#debug-form button {
+    padding: 9px 18px; /* Un poco más de padding para que se vea como un botón principal */
+}
+
+.page-order-configurator #debug-panel-container,
+.page-order-configurator .views-layer-message {
+    display: none !important;
+}
+
+.configurator-container{
+    margin-top: -25px;
+}
+
+.configurator-header h1{
+    font-size: 1.6em;
+    margin-top: 0;
+    font-weight: 300;
+    border-bottom: 0px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0px;
+    margin-bottom: 15px;
+    text-align: center;
 }
 
 /* --- Estilos para el Configurador --- */
 .configurator-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 0px;
 }
 
 .step-indicator {
     display: flex;
     justify-content: space-around;
-    margin-bottom: 30px;
     background: rgba(0,0,0,0.2);
     padding: 10px;
     border-radius: 8px;
 }
 .step {
     padding: 10px 20px;
-    color: #888;
-    border-bottom: 3px solid transparent;
+    color: #ccc;
+    border-bottom: 3px solid;
+    cursor: pointer;
+    transition: 0.2s;
+    border-bottom-color: #00c853;
 }
 .step.active {
     color: #fff;
     font-weight: bold;
     border-bottom-color: #0078d4;
 }
+.step.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-bottom-color: transparent;
+}
+.step:not(.disabled):hover {
+    border-bottom-color: #00b0ff;
+    transform: translateY(-1px);
+}
+
 
 .spa-content {
     min-height: 400px; /* Para que el layout no se colapse */
     padding: 20px;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.6);
     border-radius: 8px;
 }
 
+/* --- Estilos para el Resumen del Configurador --- */
+/* Vibe: Audi Tecnológico, elegante y moderno. */
+/* Paleta: Azules oscuros, grises espaciales y un azul eléctrico para acentos. */
+
+/* --- Contenedor Principal --- */
 .configurator-summary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255,255,255,0.2);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  background: linear-gradient(145deg, #101828, #0b121e); /* Degradado sutil azul/negro */
+  color: #e0e0e0; /* Color de texto principal (blanco roto) */
+  padding: 28px 32px;
+  border-radius: 12px; /* Bordes suavemente redondeados */
+  border: 1px solid #2a3b52; /* Borde sutil para definir la tarjeta */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Sombra para dar profundidad */
+  max-width: 500px; /* Un ancho máximo para que no se estire demasiado */
+  margin: 20px auto; /* Centrado para la demo */
 }
+
+/* --- Título Principal (Ej: "Resumen de tu Configuración") --- */
+.configurator-summary h2 {
+  color: #ffffff;
+  font-size: 1.5em; /* 24px si la base es 16px */
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0 0 24px 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #2a3b52; /* Línea divisoria sutil */
+  text-align: left;
+}
+
+/* --- Contenedor de los Detalles --- */
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Espacio uniforme entre cada sección de detalles */
+  text-align: left;
+}
+
+/* --- Estilos para las secciones (Modelo, Color, Extras) --- */
+.model-summary, .color-summary, .extras-container > div {
+  display: flex;
+  justify-content: space-between; /* Alinea nombre a la izquierda y precio a la derecha */
+  align-items: baseline;
+  font-size: 1em; /* 16px */
+}
+
+/* El h3 del modelo tiene un poco más de peso */
+.model-summary {
+  font-size: 1.125em; /* 18px */
+  font-weight: 500;
+  color: #f5f5f5;
+}
+
+/* --- Nombres y Precios --- */
+.color-name, .extra-name {
+  color: #c0c0c0; /* Un gris más suave para los nombres de items */
+}
+
+/* Estilo para todos los precios parciales */
+.model-summary span:last-of-type,
+.color-price,
+.extra-price {
+  font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace; /* Fuente monoespaciada para números */
+  color: #8a9bb5; /* Un azul grisáceo para los precios */
+  font-size: 0.95em;
+  font-weight: 400;
+}
+
+/* --- Sección de Extras --- */
+.extras-container {
+  font-weight: bold; /* Mantiene el bold que tenías en el inline style */
+  color: #ffffff;
+}
+
+/* Estilo para cada línea de extra */
+.extras-container > div {
+  padding-left: 1px; /* Indentación para que se vea como una lista */
+  font-weight: 400; /* Le quitamos el bold del contenedor padre */
+}
+
+/* El punto (•) del extra */
+.extra-name {
+  color: #a0a0a0;
+}
+
+/* Texto para cuando no hay extras seleccionados */
+.extras-container > span {
+    font-weight: 400;
+    font-style: italic;
+    color: #8a9bb5;
+    padding-left: 8px;
+}
+
+
+/* --- El Gran Final: El Precio Total --- */
+.total-price {
+  margin-top: 24px; /* Más espacio antes del total */
+  padding-top: 24px;
+  border-top: 2px solid #3478f6; /* Línea divisoria más gruesa y de color acento */
+  display: block;
+  text-align: center;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.6em; /* 26px, bien grande */
+  font-weight: 700;
+  letter-spacing: 1px;
+  
+  /* Efecto de texto degradado para el toque final "tech" */
+  background: linear-gradient(90deg, #c0daff, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.price-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 16px 24px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  transition: all 0.2s ease;
+}
+
+.price-label {
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #bbb;
+  margin-bottom: 6px;
+}
+
 .price-display {
-    font-size: 1.5em;
-    font-weight: bold;
+  font-size: 2em;
+  font-weight: 600;
+  color: #66d9ff;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.price-display .currency {
+  font-size: 0.6em;
+  opacity: 0.8;
+  align-self: flex-start;
+}
+
+.price-display .amount {
+  font-variant-numeric: tabular-nums;
 }
 .configurator-summary button {
     padding: 10px 20px;
@@ -341,58 +802,83 @@ p.views-layer-message{
     cursor: pointer;
 }
 
-/* CONFIGURATOR */
-.model-selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-.model-card { border: 2px solid #555; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; }
-.model-card:hover { transform: translateY(-5px); border-color: #0078d4; }
-.model-card.selected { border-color: #00A859; background: rgba(0, 168, 89, 0.2); transform: scale(1.05); }
-.model-card img { max-width: 100%; height: auto; border-top-left-radius: 6px; border-top-right-radius: 6px; }
-.step-actions { text-align: right; margin-top: 20px; }
-.step-actions button:disabled { background-color: #555; cursor: not-allowed; }
+/* --- CONFIGURADOR DE SELECCIÓN --- */
 
+/* 1. El Contenedor del Grid (La Rejilla) */
+.selector-grid {
+    display: grid;
+    /* Mantenemos tu excelente regla para columnas responsivas */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px; /* Un poco más de espacio */
 
-/* --- Estilos para los botones de acción del configurador --- */
-.step-actions {
-    display: flex;
-    justify-content: flex-end; /* Alinea los botones a la derecha */
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    /* LA SOLUCIÓN CLAVE: Evita que las tarjetas se estiren */
+    justify-items: center;
 }
 
-.step-actions button {
-    padding: 12px 25px;
-    font-size: 1em;
-    font-weight: bold;
-    border: none;
-    border-radius: 5px;
+/* 2. La Tarjeta de Selección */
+.selection-card {
+    /* Dimensiones y Posicionamiento */
+    width: 100%; /* La tarjeta ocupa el 100% del espacio hasta su máximo */
+    max-width: 200px;
+    
+    /* Estética de la tarjeta */
+    background-color: #1a2230; /* Un fondo oscuro para la tarjeta */
+    border: 2px solid #3d4a5f; /* Un borde más sutil y en tono */
+    border-radius: 12px; /* Bordes más suaves, más premium */
+    text-align: center;
     cursor: pointer;
-    transition: all 0.3s;
-    background-color: #0078d4;
-    color: white;
+    overflow: hidden; /* Muy importante para que la imagen respete el borde redondeado */
+    
+    /* Transiciones y rendimiento */
+    transition: transform 0.25s ease-out, box-shadow 0.25s ease-out, border-color 0.25s ease-out;
 }
 
-.step-actions button:hover:not(:disabled) {
-    background-color: #005a9e;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+/* 3. Estados de la Tarjeta (Hover y Seleccionado) */
+.selection-card:hover {
+    border-color: #0078d4;
+    transform: translateY(-6px);
+    box-shadow: 0 10px 25px rgba(0, 120, 212, 0.2); /* Sombra de color al pasar el ratón */
 }
 
-.step-actions button:disabled {
-    background-color: #555;
-    color: #999;
-    cursor: not-allowed;
+.selection-card.selected {
+    border-color: #00A859;
+    transform: scale(1.05) translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 168, 89, 0.25); /* Sombra verde al seleccionar */
+    /* El fondo ya no es necesario, la sombra y el borde son suficientes */
 }
 
-/* Para cuando hay un botón de "Volver" */
-.step-actions {
-    gap: 15px; /* Espacio entre botones */
+/* 4. La Imagen dentro de la Tarjeta (MEJORA CLAVE) */
+.selection-card img {
+    width: 100%; /* La imagen SIEMPRE ocupa el 100% de la tarjeta */
+    display: block; /* Elimina espacios fantasma debajo de la imagen */
+    
+    /* LA MAGIA PARA UN GRID PERFECTO: */
+    aspect-ratio: 16 / 10; /* Fuerza a todas las imágenes a tener la misma proporción */
+    object-fit: cover;     /* Rellena el espacio sin deformar la imagen */
 }
-.step-actions .back-button {
-    background-color: #6c757d; /* Un color gris */
+
+/* 5. Contenido de Texto dentro de la Tarjeta */
+.selection-card-content {
+    padding: 16px;
 }
-.step-actions .back-button:hover:not(:disabled) {
-    background-color: #5a6268;
+
+/* Eliminamos los estilos inline del HTML y los centralizamos aquí */
+.selection-card h3, .selection-card p {
+    margin: 0;
+    white-space: pre-wrap; /* Mantenemos tu propiedad por si es necesaria */
+    color: #f0f0f0;
+}
+
+.selection-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.selection-card p {
+    font-family: 'Menlo', 'Monaco', monospace;
+    font-size: 1rem;
+    color: #8a9bb5;
 }
 
 .color-selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
@@ -410,3 +896,541 @@ p.views-layer-message{
 .extra-item label { display: flex; flex-direction: column; cursor: pointer; }
 .extra-item label strong { font-size: 1.1em; }
 .extra-item label small { font-size: 0.9em; color: #ccc; margin-top: 5px; }
+
+
+
+
+
+/* --- Estilos para el Componente ConfirmationModal --- */
+
+/* 1. El Overlay (la capa oscura de fondo) */
+/* Esta clase se aplica al 'div' raíz del componente. */
+.modal-overlay {
+    /* Posicionamiento para cubrir todo su contenedor padre */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Estética del fondo */
+    background-color: rgba(10, 20, 30, 0.8);
+    backdrop-filter: blur(4px); /* Efecto de desenfoque, muy elegante */
+    
+    /* Capas y centrado */
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Animación de entrada para el overlay */
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* 2. El Contenido del Modal (la "caja" o diálogo) */
+.modal-content {
+    background: #1a2230;
+    padding: 24px 32px;
+    border-radius: 12px;
+    border: 1px solid #3d4a5f;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    max-width: 450px;
+    width: 90%; /* Asegura que no sea demasiado grande en pantallas pequeñas */
+    color: #f0f0f0;
+
+    /* Animación de entrada para el modal */
+    animation: zoomIn 0.25s ease-out;
+}
+
+/* 3. El Párrafo del Mensaje */
+.modal-content p {
+    margin: 0 0 24px 0;
+    font-size: 1.1em;
+    line-height: 1.5;
+}
+
+/* 4. El Contenedor de los Botones de Acción */
+.modal-actions {
+    /* Simplemente para agrupar los botones */
+}
+
+/* 5. Estilos para TODOS los botones dentro del modal */
+.modal-actions button {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    margin: 0 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1em;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+/* Efecto hover sutil para los botones */
+.modal-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 6. Estilos específicos para el botón de Confirmar */
+.modal-actions .confirm-btn {
+    background-color: #00A859; /* Verde de éxito/confirmación */
+    color: white;
+}
+
+/* 7. Estilos específicos para el botón de Cancelar */
+.modal-actions .cancel-btn {
+    background-color: #555; /* Gris neutro */
+    color: white;
+}
+
+/* --- Animaciones Opcionales pero Recomendadas --- */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+    from { 
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to { 
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* --- 1. Contenedor Principal: El Orquestador --- */
+/* Aplicamos Flexbox para alinear los dos elementos hijos (precio y botones) */
+.price-buttons-container {
+    display: flex; /* ¡La magia empieza aquí! */
+    justify-content: space-between; /* Empuja el precio a la izquierda y los botones a la derecha */
+    align-items: center; /* Alinea verticalmente los dos elementos en el centro */
+
+    width: 100%; /* Ocupa todo el ancho disponible */
+    padding: 16px 24px; /* Espacio interno para que no se pegue a los bordes */
+    box-sizing: border-box; /* Asegura que el padding no altere el ancho total */
+    border-top: 1px solid rgba(255, 255, 255, 0.2); /* La línea divisoria superior que querías */
+    margin-top: 24px; /* Espacio superior para separarlo del contenido de arriba */
+}
+
+
+/* --- 2. Caja del Precio: Estilo "Glassmorphism" --- */
+/* Estos estilos ya estaban bastante bien, los he pulido un poco. */
+.price-container {
+    display: flex; /* Usamos flex para ordenar el contenido interno */
+    flex-direction: column; /* Apila el label encima del precio */
+    align-items: flex-start; /* Alinea el texto a la izquierda dentro de la caja */
+    
+    background: rgba(30, 30, 30, 0.5); /* Un fondo oscuro semitransparente */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px; /* Bordes un poco más redondeados */
+    padding: 16px 24px;
+    
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #ffffff;
+}
+
+.price-label {
+    font-size: 0.6em; /* 12px-13px */
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #b0b8c4; /* Un gris azulado más suave */
+    margin-bottom: -2px;
+}
+
+.price-display {
+    display: flex;
+    align-items: baseline; /* Alinea el número y el símbolo € por su base */
+    gap: 8px; /* Espacio entre el número y el símbolo */
+    line-height: 1; /* Evita alturas de línea extrañas */
+}
+
+.price-display .amount {
+    font-size: 1em; /* 35px, bien visible */
+    font-weight: 600;
+    color: #61dafb; /* Un azul cian brillante, muy "tech" */
+    font-variant-numeric: tabular-nums; /* Asegura que los números tengan el mismo ancho */
+}
+
+.price-display .currency {
+    font-size: 0.6em; /* 22px */
+    font-weight: 400;
+    color: #b0b8c4;
+}
+
+
+/* --- 3. Contenedor de Botones y Estilos --- */
+/* Este contenedor es ahora un simple grupo de botones */
+.step-actions {
+    display: flex; /* Alinea los botones uno al lado del otro */
+    gap: 12px; /* Espacio limpio y moderno entre los botones */
+}
+
+.step-actions button {
+    padding: 14px 28px;
+    font-size: 0.9em; /* 14px */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    border: none;
+    border-radius: 8px; /* Bordes redondeados consistentes */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    
+    background-color: #0078D4; /* Azul principal de Microsoft/Windows */
+    color: white;
+}
+
+/* Estilo del botón "ANTERIOR" para que sea menos prominente */
+.step-actions button:first-child {
+    background-color: transparent;
+    border: 2px solid #5a6268;
+    color: #f0f0f0;
+}
+
+/* Efectos Hover para dar feedback al usuario */
+.step-actions button:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 120, 212, 0.4);
+}
+
+.step-actions button:first-child:hover:not(:disabled) {
+    background-color: #5a6268;
+    border-color: #5a6268;
+    box-shadow: 0 5px 15px rgba(90, 98, 104, 0.4);
+}
+
+/* Estilo para botones deshabilitados */
+.step-actions button:disabled {
+    background-color: #333;
+    border-color: #444;
+    color: #777;
+    cursor: not-allowed;
+}
+
+.step-container {
+      display: flex;
+  align-items: center; /* centra verticalmente */
+  justify-content: center; /* centra horizontalmente (opcional) */
+    min-height: 300px; /* o el valor que necesites */
+}
+
+.step-container component{
+    width: 90%;
+}
+
+.step-container .selector-grid component{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Ocultamos varios hijos de los extras para que la demo sea más visual*/
+.multipicker-list > *:nth-child(n+5) {
+  display: none;
+}
+
+.guest-access {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 1.0em;
+    color: #fff;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.guest-access:hover {
+    color: #4da3ff;;
+    text-decoration-color: #4da3ff;;
+}
+
+/* --- ESTILOS PARA EL INFORME DE EMISIONES --- */
+
+/* --- Estilos para el contenedor del reporte de emisiones --- */
+#show-report {
+    /* Fondo con efecto "Glassmorphism" para legibilidad y estética moderna */
+    background-color: rgba(25, 27, 31, 0.6); /* Un fondo oscuro y semitransparente */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* Para Safari */    
+    border-radius: 12px;
+    max-width: 600px; /* Evita que se estire demasiado en pantallas grandes */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+
+    /*border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 5px 25px;
+    padding-top: 7px;*/
+}
+
+/* --- Título "Emissions Report" --- */
+#show-report h3 {
+    font-size: 12px;
+    font-weight: 500;
+    color: #ffffff;
+    margin-bottom: 0px; /* --- REDUCIMOS el espacio con la tabla --- */
+    letter-spacing: 0.5px;
+
+    padding: 11px 5px;
+    padding-bottom: 2px;
+    margin-left: 11px;
+}
+
+/* --- Reseteo y estilo de la tabla --- */
+#show-report table {
+    /* Anulamos los estilos en línea y el atributo border="1" */
+    border-collapse: collapse; /* Fundamental para un look moderno */
+    border-spacing: 0;
+    border: none; /* Quitamos cualquier borde residual */
+    width: 94% !important;
+    margin-left: 3%;
+    margin-top: 5px;
+}
+
+/* --- Cabeceras de la tabla (th) --- */
+#show-report th {
+    border: none; /* Quitamos los bordes feos del HTML */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25); /* Añadimos una línea inferior limpia */
+    
+    color: #b0b3b8; /* Un gris claro para diferenciarlo del contenido */
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 10px 8px; /* --- FILAS MÁS COMPRIMIDAS (menos padding vertical) --- */
+}
+
+/* --- Celdas de datos de la tabla (td) --- */
+#show-report td {
+    border: none; /* Quitamos los bordes feos del HTML */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea divisoria muy sutil */
+    
+    color: #e0e0e0; /* El color de texto principal */
+    font-size: 15px;
+    padding: 12px 8px; /* --- FILAS MÁS COMPRIMIDAS --- */
+}
+
+/* Para que la última fila no tenga línea por debajo */
+#show-report tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- NUEVO ESTILO PARA EL BANNER PROMOCIONAL --- */
+
+/* 1. Contenedor principal: Lo convertimos en un widget de esquina */
+#global-promo-banner-container {
+    position: fixed;
+    top: 15px; /* Espacio desde el borde inferior */
+    left: 18px;  /* Espacio desde el borde derecho */
+    z-index: 10000;
+    /* Ya no necesita width: 100%, se adaptará a su contenido */
+}
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 2. Estilo del panel ("panelcillo"): moderno y elegante */
+#global-promo-banner-container .promo-banner {
+    max-width: 500px; /* Evita que sea demasiado ancho */
+    padding: 16px 22px;
+    
+    /* Efecto "Glassmorphism": semitransparente y desenfocado */
+    background-color: rgba(30, 32, 35, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); /* Para Safari */
+    
+    color: #e0e0e0;
+    border-radius: 12px; /* Bordes más redondeados */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); /* Sombra para darle profundidad */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil que atrapa la luz */
+    
+    line-height: 1.5;
+    font-size: 14px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    
+    /* Transición suave para el hover y cambio de banner */
+    transition: all 0.3s ease-in-out;
+}
+
+/* 3. Efecto hover sutil para hacerlo interactivo */
+#global-promo-banner-container .promo-banner:hover {
+    /*transform: translateY(-5px); Se eleva un poco */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* 4. Estructura interna del texto: más legible */
+#global-promo-banner-container .promo-banner p {
+    margin: 0;
+    text-align: center;
+}
+
+#global-promo-banner-container .promo-banner .quote {
+    display: block; /* La cita en su propia línea */
+    font-style: italic;
+    opacity: 0.8; /* Un poco menos de énfasis en la cita */
+    margin-bottom: 8px; /* Espacio entre la cita y el enlace */
+}
+
+#global-promo-banner-container .promo-banner a {
+    color: #58a6ff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+#global-promo-banner-container .promo-banner a:hover {
+    text-decoration: underline;
+}
+
+/* --- LA LÓGICA DE VISIBILIDAD (SE MANTIENE IGUAL) --- */
+
+/* 5. Por defecto, ocultamos todos los banners */
+#global-promo-banner-container .promo-banner {
+    display: none;
+}
+
+/* 6. Mostramos el banner de N-Tier por defecto */
+#global-promo-banner-container #ntier-promo-banner {
+    display: block;
+    text-align: center;
+    min-width: 365px;
+    max-width: 365px;
+    padding: 16px 10px;
+}
+
+#global-promo-banner-container #ntier-promo-banner.promo-banner p {
+    text-align: center;
+}
+
+/* 7. Cuando la página es el configurador, cambiamos el banner */
+.page-order-configurator #global-promo-banner-container #ntier-promo-banner {
+    display: none;
+}
+.page-order-configurator #global-promo-banner-container #lifetree-promo-banner {
+    display: block;
+}
+
+/* 1. Banner N-Tier: Un rosa/magenta vibrante que rompe la monotonía */
+#global-promo-banner-container #ntier-promo-banner {
+    /* Un rosa magenta oscuro pero llamativo, con el efecto de cristal */
+    background-color: rgba(194, 24, 91, 0.85);
+    /* Borde más visible para que "atrape" la luz sobre el nuevo fondo */
+    border-color: rgba(255, 255, 255, 0.2);
+    /* Texto blanco puro para máximo contraste */
+    color: #ffffff;
+}
+
+#global-promo-banner-container #ntier-promo-banner a {
+    /* El enlace también en blanco, para no añadir más colores a la mezcla */
+    color: #ffffff;
+    font-weight: bold; /* Un poco más de énfasis */
+}
+
+/* 2. Banner LifeTree: Un verde bosque profundo y orgánico */
+#global-promo-banner-container #lifetree-promo-banner {
+    /* Un verde oscuro y rico, manteniendo el efecto cristal */
+    background-color: #002D04FF;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #e0e0e0; /* Mantenemos un blanco suave que queda bien con el verde */
+}
+
+#global-promo-banner-container #lifetree-promo-banner a {
+    /* Un verde claro y brillante para el enlace, que resalta sobre el fondo oscuro */
+    color: #a5d6a7; 
+}
+
+.page-order-configurator #global-promo-banner-container{
+    display: none;
+    position: relative;
+    top: -5px;
+    left: 25px;
+    z-index: 10000;
+    animation: fadeInDown 0.5s ease-out forwards;
+}
+.page-order-configurator #global-promo-banner-container .promo-banner{
+    max-width: 600px;
+    margin: 5px 0;
+}
+
+
+/* 5. ¡REFINAMIENTO CLAVE! El enlace con icono de GitHub */
+#global-promo-banner-container .promo-banner a {
+    display: inline-flex; /* Usamos flex para alinear el icono y el texto */
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 7px;
+    background-color: rgba(0, 0, 0, 0.2);
+    color: #e0e0e0;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Añadimos el icono de GitHub antes del texto usando un pseudo-elemento */
+#global-promo-banner-container .promo-banner a::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    /* Usamos una máscara CSS para "colorear" un SVG */
+    background-color: currentColor; /* Hereda el color del texto del enlace */
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>');
+    mask-size: cover;
+}
+
+/* Banner N-Tier (Púrpura) */
+#global-promo-banner-container #ntier-promo-banner {
+    background-color: rgba(81, 45, 168, 1);
+    color: #e3dffc;
+}
+
+/* Banner LifeTree (Verde) */
+#global-promo-banner-container #lifetree-promo-banner {
+    background-color: rgba(27, 94, 32, 1);
+    color: #d9f2ef;
+}
+#global-promo-banner-container #lifetree-promo-banner a {
+    color: #e0f2f1; /* Ajustamos el color del enlace para que se vea bien */
+}
+
+#global-promo-banner-container .promo-banner a {
+    /* ...tus estilos existentes como padding, background-color, etc... */
+    
+    /* ¡LA CLAVE! Esto hace que cualquier cambio sea suave. */
+    transition: all 0.25s ease-in-out; 
+}
+
+
+/* Hover para el banner PÚRPURA (N-Tier) */
+#ntier-promo-banner a:hover {
+    transform: translateY(-1px);
+    /* Sombra de color púrpura para crear un resplandor */
+    box-shadow: 0 0 15px rgba(179, 136, 255, 0.7); 
+    background-color: rgba(255, 255, 255, 0.2); /* Fondo más brillante */
+}
+
+/* Hover para el banner VERDE (LifeTree) */
+#lifetree-promo-banner a:hover {
+    /* 1. El fondo se vuelve un poco más opaco para dar feedback. */
+    background-color: rgba(0, 0, 0, 0.4);
+
+    /* 2. El botón "se eleva" sutilmente hacia el cursor. */
+    transform: translateY(-1px);
+
+    /* 3. La sombra se intensifica para reforzar el efecto de elevación. */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}

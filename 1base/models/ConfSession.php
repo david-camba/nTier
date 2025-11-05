@@ -48,7 +48,7 @@ class ConfSession_Base extends ORM implements ConfSession
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // Si encontramos datos, creamos y devolvemos una nueva instancia "llena".
-        return $data ? new static($this->app, $this->pdo, $data) : null;
+        return $data ? new static($this->layerResolver, $this->pdo, $data) : null;
     }
 
     /**
@@ -71,7 +71,7 @@ class ConfSession_Base extends ORM implements ConfSession
 
         $items = [];
         foreach ($allData as $data) {
-            $items[] = new static($this->app, $this->pdo, $data);
+            $items[] = new static($this->layerResolver, $this->pdo, $data);
         }
         
         return new Collection($items);

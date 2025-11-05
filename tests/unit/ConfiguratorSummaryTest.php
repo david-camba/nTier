@@ -89,10 +89,11 @@ class ConfiguratorSummaryTest extends TestCase
         $returnedColorMock = m::mock(Color_Base::class);
         $returnedColorMock->name = 'color.black_mythos';
         $returnedColorMock->price_increase = 1200.0;
+        $returnedColorMock->id_color = 10;
 
         $extrasData = [
-            ['name' => 'extra.rims_21', 'price' => 2500.0],
-            ['name' => 'extra.sunroof', 'price' => 1700.0]
+            ['name' => 'extra.rims_21', 'price' => 2500.0, 'id_extra' => '101'],
+            ['name' => 'extra.sunroof', 'price' => 1700.0, 'id_extra' => '102']
         ];
         $returnedExtrasCollection = m::mock(Collection::class);
         $returnedExtrasCollection->shouldReceive('toArray')->andReturn($extrasData);
@@ -113,10 +114,10 @@ class ConfiguratorSummaryTest extends TestCase
         // ASSERT (Verificar que el resultado es el esperado)
         $this->assertIsArray($summary);
         $this->assertEquals(['name' => 'Audi A8', 'price' => 90000], $summary['model']);
-        $this->assertEquals(['name' => 'Mythos Black', 'price' => 1200.0], $summary['color']);
+        $this->assertEquals(['name' => 'Mythos Black', 'price' => 1200.0, 'id_color' => 10], $summary['color']);
         $this->assertCount(2, $summary['extras']);
-        $this->assertEquals(['name' => '21" Rims', 'price' => 2500.0], $summary['extras'][0]);
-        $this->assertEquals(['name' => 'Panoramic Sunroof', 'price' => 1700.0], $summary['extras'][1]);
+        $this->assertEquals(['name' => '21" Rims', 'price' => 2500.0, 'id_extra' => '101'], $summary['extras'][0]);
+        $this->assertEquals(['name' => 'Panoramic Sunroof', 'price' => 1700.0, 'id_extra' => '102'], $summary['extras'][1]);
     }
 
     /**

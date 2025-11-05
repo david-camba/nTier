@@ -69,13 +69,14 @@ set_include_path(implode(PATH_SEPARATOR, $absoluteIncludePaths));
 // -------------------------------------------------------------------------
 // Cargamos la clase principal de nuestra aplicación.
 // Gracias al include_path, PHP la encontrará en 1base/lib/
-require_once __DIR__ . '/../lib/App.php';        
+require_once __DIR__ . '/../lib/App.php';  
+require_once __DIR__ . '/../lib/LayerResolver.php';      
 
 try {
     // Creamos una instancia de nuestra aplicación, pasándole la configuración
     // que hemos cargado. La clase App es ahora una "fábrica" genérica.
-    
-    $app = new App($config, $router);
+    $layerResolver = new LayerResolver();
+    $app = new App($config, $router, $layerResolver);
 
     // Le damos el control. A partir de aquí, la clase App orquesta todo.
     $app->run();

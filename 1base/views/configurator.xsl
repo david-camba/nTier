@@ -49,13 +49,14 @@
                 -->
             </div>
 
-            <!--  Barra de Progreso de los Pasos -->
+            <!--  Barra de Progreso de los Pasos 
             <div class="step-indicator">
                 <div class="step active" data-step="1">1. <xsl:value-of select="configurator_step1_title"/></div>
                 <div class="step" data-step="2">2. <xsl:value-of select="configurator_step2_title"/></div>
                 <div class="step" data-step="3">3. <xsl:value-of select="configurator_step3_title"/></div>
                 <div class="step" data-step="4">4. <xsl:value-of select="configurator_step4_title"/></div>
             </div>
+            -->
 
             <!-- EL CONTENEDOR DINÁMICO PARA LA SPA -->
             <!-- 
@@ -68,17 +69,18 @@
                 <p class="loading-message"><xsl:value-of select="configurator_loading_message"/></p>
             </div>
             
-            <!-- Resumen y Botones de Acción -->
+            <!-- Resumen y Botones de Acción 
             <div class="configurator-summary">
                 <div class="price-display">
                     <xsl:value-of select="configurator_price_label"/>: <span id="total-price">0.00</span> €
                 </div>
                 <div class="actions">
                     <button id="save-template-button" style="display: none;"><xsl:value-of select="configurator_save_template_button"/></button>
-                    <!-- Este botón estará oculto hasta el último paso -->
+                    
                     <button id="assign-client-button" style="display: none;"><xsl:value-of select="configurator_assign_client_button"/></button>
                 </div>
             </div>
+            -->
 
         </div>
     </xsl:template>

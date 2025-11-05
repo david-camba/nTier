@@ -51,28 +51,22 @@ class ConfiguratorController_Base extends Controller
         //$view->addJson('templates-data', $templates->toArray());
 
         // 3. PREPARAR Y DEVOLVER LA VISTA
-        $view = $this->getView('configurator', $this->_getConfiguratorViewValues());
+        $view = $this->getView('configurator', $this->_getConfiguratorViewTranslations());
+        $view->add('page_css_class', 'page-order-configurator');
         
         // Pasamos la sesión activa y las plantillas a la vista.
         // El JS las leerá para saber el estado inicial.
         $view->addJson('active-session-data', $activeSession->toArray());        
 
-        $view->add('scripts','/1base/js/configurator_spa.js');
 
-        
-        /* ESTA PARTE DE AQUÍ - HAY QUE VER SI ESTE ESTANDAR SE SOSTIENE PARA HACER UNA FUNCION EN EL CONTROLLADOR PADRE CON ESTO */
-        // --- ¡NUEVA LÓGICA DE TRADUCCIONES PARA JS! ---
+        //$view->add('scripts', '/1base/js/configurator_spa.js'); //dejaremos de usar nuestro viejo configurador para usar el framework frontend
+
+        $view->add('scripts', ['src' => '/1base/js/order-configurator/index.js', 'type' => 'module']);
+
         // 1. Definimos todas las claves que nuestra SPA va a necesitar.
-        $jsTranslationKeys = [
-            'from_tag' => 'from_tag',
-            'loading_models' => 'configurator_loading_models',
-            'step1_title'    => 'configurator_step1_title',
-            'next_button'    => 'configurator_next_button', // Clave nueva
-            // ... (añade aquí todas las demás claves que usará el JS)
-            'loading_colors' => 'configurator_loading_colors', // Clave nueva
-            'step2_title'    => 'configurator_step2_title',
-            'back_button'    => 'configurator_back_button',   // Clave nueva
-        ];
+        // La clave del array (izquierda) es la que usará el JS (ej: props.$translations.step1_title).
+        // El valor del array (derecha) es la clave real de tu fichero de traducciones.
+        $jsTranslationKeys = $this->_getConfiguratorJSTranslations();
         
         // 2. Creamos un array con las traducciones reales.
         $jsTranslations = [];
@@ -146,7 +140,6 @@ class ConfiguratorController_Base extends Controller
     {
         try {
             $confSession = $this->_getAndValidateSession($sessionId);
-
             // Reseteamos toda la configuracion
             $confSession->resetConfiguration();
 
@@ -185,7 +178,7 @@ class ConfiguratorController_Base extends Controller
 
             $colors = $this->service->getColorsForCarModel($confSession->id_model);
 
-            $totalPrice = $this->service->calculateTotal($confSession);
+            $priceDetails = $this->service->getPriceDetails($confSession);
 
             // 3. Lógica de formateo y traducción.
             $translatedColors = $this->service->prepareColors($colors);
@@ -194,7 +187,7 @@ class ConfiguratorController_Base extends Controller
             return $this->json([
                 'activeSession' => $confSession->toArray(), // Devolvemos el estado actualizado
                 'colors' => $translatedColors,
-                'totalPrice' => $totalPrice,
+                'priceDetails' => $priceDetails,
             ]);
 
         } catch (Exception $e) {
@@ -256,12 +249,12 @@ class ConfiguratorController_Base extends Controller
 
             $translatedExtras = $this->service->prepareExtras($extras);
 
-            $totalPrice = $this->service->calculateTotal($confSession);
+            $priceDetails = $this->service->getPriceDetails($confSession);
 
             return $this->json([
                 'activeSession' => $confSession->toArray(),
                 'extras' => $translatedExtras->toArray(),
-                'totalPrice' => $totalPrice,                
+                'priceDetails' => $priceDetails,                
             ]);
 
         } catch (Exception $e) {
@@ -282,9 +275,20 @@ class ConfiguratorController_Base extends Controller
             $confSession = $this->_getAndValidateSession($sessionId);
 
             $input = json_decode(file_get_contents('php://input'));
+            debug('$input', $input,false);
             $extraIds = (array)($input->extraIds ?? []);
+
             
-            $this->service->saveExtras($confSession, $extraIds); 
+            debug('$extraIds', $extraIds,false);
+
+            //Si nos han pedido que limpiemos los extras, dejamos el campo a null
+            if(count($extraIds) > 0 && $extraIds[0] === 'cleanExtras'){
+                $confSession->extras = null;
+                $confSession->save();
+            }
+            else{
+                $this->service->saveExtras($confSession, $extraIds); 
+            }
 
             $include = $_GET['include'] ?? null;
             if ($include === 'next-step') {
@@ -293,7 +297,7 @@ class ConfiguratorController_Base extends Controller
             return $this->json();      
 
         } catch (Exception $e) {
-            return $this->jsonError('Error al procesar la selección.', 500);
+            return $this->jsonError('Error al procesar la selección de extras.', 500);
         }
     }
 
@@ -307,13 +311,13 @@ class ConfiguratorController_Base extends Controller
 
             // --- 2. RECOPILAR TODOS LOS DATOS PARA EL RESUMEN ---
             $configuratorService = $this->service;            
-            $totalPrice = $configuratorService->calculateTotal($confSession); 
+            $priceDetails = $configuratorService->getPriceDetails($confSession); 
             $summaryData = $configuratorService->getSummaryData($confSession);
             
             return $this->json([
                 'activeSession' => $confSession->toArray(),
                 'summary' => $summaryData,
-                'totalPrice' => $totalPrice,
+                'priceDetails' => $priceDetails,
             ]);
 
         } catch (Exception $e) {
@@ -360,7 +364,7 @@ class ConfiguratorController_Base extends Controller
     }
 
 
-    protected function _getConfiguratorViewValues(): array
+    protected function _getConfiguratorViewTranslations(): array
     {
     return [
             // Traducciones
@@ -379,4 +383,45 @@ class ConfiguratorController_Base extends Controller
         ];
     }
 
+    protected function _getConfiguratorJSTranslations() : array
+    {
+    return [
+            // --- Títulos y mensajes generales ---
+            'title'            => 'configurator_title',
+            'loading_message'  => 'configurator_loading_message',
+            'price_label'      => 'configurator_price_label', // Para 'Precio Total' o 'Estimated Total Price'
+
+            // --- Pasos del configurador (Steps) ---
+            'step1_title'      => 'configurator_step1_title',    // 'Choose a model'
+            'step2_title'      => 'configurator_step2_title',    // 'Choose a color'
+            'step3_title'      => 'configurator_step3_title',    // 'Extras'
+            'step4_title'      => 'configurator_step4_title',    // 'Assign Client' (o 'Resumen' si cambias la traducción)
+
+            // --- Mensajes de carga específicos ---
+            'loading_models'   => 'configurator_loading_models', // 'Loading models...'
+            'loading_colors'   => 'configurator_loading_colors', // 'Loading colors...'
+
+            // --- Botones ---
+            'next_button'          => 'configurator_next_button',          // 'Next' / 'SIGUIENTE'
+            'back_button'          => 'configurator_back_button',          // 'Back' / 'ANTERIOR'
+            'save_template_button' => 'configurator_save_template_button', // 'Save as Template'
+            'assign_client_button' => 'configurator_assign_client_button', // 'Assign to Client' / 'ASIGNAR A CLIENTE'
+
+            // --- Plantillas (Templates) ---
+            'templates_label'         => 'configurator_templates_label',
+            'templates_default_option'=> 'configurator_templates_default_option',
+            'no_templates_message'    => 'configurator_no_templates_message',
+
+            // --- Textos para componentes específicos (identificados en tu DOM) ---
+            // NOTA: Estas claves no existen en tu fichero de traducciones.
+            // Deberías añadirlas para que tu app sea 100% traducible.
+            // Te sugiero las claves de la derecha.
+            'extras_picker_title' => 'configurator_extras_picker_title', // Para: 'Escoge tantos extras como quieras'
+            'model_card_price_prefix' => 'configurator_model_card_price_prefix', // Para: 'Desde '
+            'model_picker_title' => 'configurator_model_picker_title', // Para: 'Elige tu modelo favorito'
+            'summary_title' => 'configurator_summary_title', // Para: 'Resumen de la compra'
+            'summary_final_price' => 'configurator_summary_final_price', // Para: 'Precio Final'
+            'summary_no_extras' => 'configurator_summary_no_extras', // Para: 'Sin extras'
+        ];
+    }
 }

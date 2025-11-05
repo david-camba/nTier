@@ -23,15 +23,24 @@
                     .background-container {background-image: url('<xsl:value-of select="login_background_image_url"/>'); }
                 </style>
             </head>
-            <body>
+
+            <body class='login-page'>
+                <div class="injected-content">
+                    <!-- 1. Iteramos sobre cada elemento 'block' dentro de 'injected_blocks' -->
+                    <xsl:for-each select="injected_blocks/injected_block">
+                    
+                        <!-- 2. Para CADA bloque, inyectamos su contenido como HTML crudo -->
+                        <xsl:value-of select="." disable-output-escaping="yes"/>
+                        
+                    </xsl:for-each>
+                </div>
                 <!-- Aplicamos la plantilla del selector de idioma -->
                 <xsl:apply-templates select="." mode="language-selector"/>
 
                 <div class="background-container">
                     <div class="layout-container">
                         <div class="left-box">
-                        Usar el traductor...
-                            <p>Aqui tengo que meter la explicación rápida del sistema (empieza en layer 3)</p>
+                            <div class="login-explanation"> <xsl:value-of select="login_explanation" disable-output-escaping="yes"/> </div>
                             <p style="background-color:rgba(60, 179, 113, 0.6)"><xsl:value-of select="login_userlevel_test"/></p>
                         </div>
                         <div class="login-box">                           
@@ -72,9 +81,13 @@
                 </xsl:attribute>
             </input>
             
-            <button type="submit">
+            <button id="login-button" type="submit">
                 <xsl:value-of select="login_form_submit_button"/>
             </button>
+
+            <a href="/guest-access" class="guest-access" id="guest-access">
+                <xsl:value-of select="login_form_guest_access"/>
+            </a>
             
             <div id="login-message" style="margin-top: 15px;"></div>
         </form>
@@ -100,7 +113,7 @@
     <!-- DEFINICIÓN POR DEFECTO DEL BLOQUE DEL SELECTOR DE IDIOMA -->
     <xsl:template match="data" mode="language-selector">
         <div class="language-selector">
-            <span style="color:red!important"><xsl:value-of select="login_translation_message"/></span>
+            <span><xsl:value-of select="login_translation_message"/></span>
             <a href="?lang=es" title="Español">
                 <img src="/1base/icons/es.svg" alt="Bandera de España"/>
             </a>

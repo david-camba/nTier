@@ -46,6 +46,11 @@ return [
             'action' => 'showLogin'
         ],
 
+        '/guest-access'        => [
+            'controller' => 'AuthController', 
+            'action' => 'createAuthUser'
+        ],
+
         '/logout' => [
             'controller' => 'AuthController', 
             'action' => 'doLogout'

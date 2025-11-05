@@ -3,13 +3,11 @@ class AuthController_Base extends Controller
 {
     protected TranslatorService $translator;
     protected AuthService $service;
-    protected UserSession $userSessionModel;
 
-    public function __construct(AuthService $service, TranslatorService $translator, UserSession $userSessionModel)
+    public function __construct(AuthService $service, TranslatorService $translator)
     {
         $this->translator = $translator;
-        $this->service = $service;
-        $this->userSessionModel = $userSessionModel;        
+        $this->service = $service;     
     }
 
     public function showLogin()
@@ -20,8 +18,10 @@ class AuthController_Base extends Controller
             'login_form_username_placeholder'   => $this->translate('login_form_username_placeholder'),
             'login_form_password_placeholder'   => $this->translate('login_form_password_placeholder'),
             'login_form_submit_button'          => $this->translate('login_form_submit_button'),
+            'login_form_guest_access'          => $this->translate('login_form_guest_access'),            
             'login_translation_message'         => $this->translate('login_translation_message'),
             'login_userlevel_test'              => $this->translate('login_userlevel_warning'), 
+            'login_explanation'              => $this->translate('login_explanation'), 
             'scripts'                           => ['/js/1base/login_base.js','/js/common/utils.js'], //we can set various scripts
         ]);
         
@@ -67,6 +67,50 @@ class AuthController_Base extends Controller
             return $this->jsonError($loginCheck['message'], $loginCheck['statusCode']);
         }
     }
+
+    public function createAuthUser() : never
+    {
+        $authService = $this->service;
+        $userData = $authService->createGuestUser(); //creamos el usuario, esto nos devolverá su username y contraseña
+
+        if (!$userData) throw new Exception('Could not create guest user.');
+
+        //Logueamos al usuario
+        $username = $userData['username'];
+        $password = $userData['password']; 
+        $loginCheck = $authService->checkLogin($username, $password, $this->translator); //como los datos serán correctos, el loginCheck debería ser true 
+
+        //Si fallo mandamos error
+        if(!$loginCheck['success']) throw new Exception('Guest user could not be logged.');
+
+        //Redirige al usuario a la demo de LifeTree o a la homepage, según los parámetros de la URL
+        $this->redirectToDemo();
+    }
+
+    protected function redirectToDemo() : never
+    {
+        /*Ejemplos URLs: 
+            • Homepage en EN: guest-access?lang=en
+            • Frontend en ES: guest-access?redirect=LifeTree&lang=es            
+        */
+
+        //Obtenemos el idioma pedido o seteamos ingles por defecto
+        $langCode = $_GET['lang'] ?? 'en';
+        $langCode = preg_replace('/[^a-z]/i', '', $langCode); //evitamos inyecciones
+        $setLanguage = '?lang='.$langCode;
+
+        //comprobamos a ver si se nos ha pedido redirección
+        $redirect = $_GET['redirect'] ?? null;
+        $redirect = preg_replace('/[^a-z]/i', '', $redirect); //evitamos inyecciones
+
+        //Si se ha solicitado, redirigimos a la demo del LifeTree framework directamente
+        if ($redirect === 'LifeTree') 
+            $this->redirect('/app/config'.$setLanguage, 301);
+        
+        //Sino, le redirigimos a la homepage
+        $this->redirect('/app'.$setLanguage, 301); 
+    }
+    
 
     /**
      * Cierra la sesión del usuario actual.

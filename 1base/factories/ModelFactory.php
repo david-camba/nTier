@@ -1,14 +1,14 @@
 <?php
 class ModelFactory_Base
 {
-    protected App $app;
+    protected LayerResolver $layerResolver;
     protected array $connections = []; // Caché de conexiones, ahora vive aquí.
 
     public $rootFinder = '/../..';
 
-    public function __construct(App $app)
+    public function __construct(LayerResolver $app)
     {
-        $this->app = $app;        
+        $this->layerResolver = $app;        
         require_once 'lib/components/ORM.php'; //define the models father
         require_once 'lib/support/Collection.php'; //define collection objects that will be return by the models
     }
@@ -18,10 +18,11 @@ class ModelFactory_Base
         $pdo = match ($connectionType) {
             'master' => $this->getMasterConnection(),
             'dealer' => $this->getDealerConnection(),
+            'productAudi' => $this->getProductAudiDBConnection(), //DEMO: pasamos esta DB aquí para que siempre les funcione el Configurador de pedidos a los usuarios
             default => throw new Exception("Tipo de conexión desconocido: {$connectionType}"),
         };
         
-        $model = $this->app->getComponent('model', $modelName, [$this->app, $pdo, $constructorArgs], $userLevel);
+        $model = $this->layerResolver->getComponent('model', $modelName, [$this->layerResolver, $pdo, $constructorArgs], $userLevel);
         
         return $model; //we pass the ready PDO to the model constructor
     }
@@ -34,7 +35,7 @@ class ModelFactory_Base
      */
     protected function getMasterConnection()
     {
-        $brand = $this->app->getConfig('general.brandName');
+        $brand = App::getInstance()->getConfig('general.brandName');
         $dbName = "{$brand}_master";
 
         if (!isset($this->connections[$dbName])) {
@@ -48,8 +49,8 @@ class ModelFactory_Base
      */
     protected function getDealerConnection()
     {
-        $brand = $this->app->getConfig('general.brandName');
-        $concessionaireId = $this->app->getContext('user')->id_dealer;
+        $brand = App::getInstance()->getConfig('general.brandName');
+        $concessionaireId = App::getInstance()->getContext('user')->id_dealer;
         
         $dbName = "{$brand}_{$concessionaireId}";
 
@@ -64,5 +65,17 @@ class ModelFactory_Base
         $this->connections[$dbName] = new PDO('sqlite:' . $path);
         $this->connections[$dbName]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->connections[$dbName]->exec('PRAGMA foreign_keys = ON;');
+    }
+    
+    // NOTA DEMO: este método de conexión debería estar solo en Audi, pero lo dejamos aquí para que la demo no de errores nunca si se intenta debugear el configurador de pedidos
+    protected function getProductAudiDBConnection()
+    {
+        $brand = App::getInstance()->getConfig('general.brandName');
+        $dbName = "{$brand}_prod";
+
+        if (!isset($this->connections[$dbName])) {
+            $this->_setSQLitePDO($dbName);  
+        }
+        return $this->connections[$dbName];
     }
 }

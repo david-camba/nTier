@@ -66,7 +66,8 @@ class DashboardController_Base extends Controller
                 // filter() mantiene un elemento si el callback devuelve 'true'.
                 // Queremos mantener a todos los usuarios CUYO ID SEA DIFERENTE
                 // al del manager que pide el informe.
-                return $user->id_user !== $manager->id_user;
+                return $user->id_user !== $manager->id_user 
+                    && !str_starts_with($user->username, 'guest_'); //filtro los invitados creados
             })
             ->map(function ($user) {
             return [

@@ -19,7 +19,6 @@ class ConfiguratorService_Base extends Service implements ConfiguratorService
         $this->extraModel = $extraModel;
     }
 
-
     public function saveExtras(ConfSession_Base $confSession, $extraIds)
     {
         // Los extras vienen como un array de IDs.
@@ -67,6 +66,61 @@ class ConfiguratorService_Base extends Service implements ConfiguratorService
     /**
      * Calcula el precio total para una sesión de configuración dada.
      *
+     * @param ConfSession_Base $confSession El objeto de la sesión de configuración.
+     * @return float El precio total calculado.
+     */
+    public function getPriceDetails(ConfSession_Base $confSession)
+    {
+        $total = 0.0;
+
+        // 1. Añadir el precio base del modelo.
+        $carModel = null;
+        if ($confSession->id_model) {
+            $carModel = $this->carModel->find($confSession->id_model);
+            if ($carModel) {
+                $total += (float)$carModel->price;
+            }
+            //$total += $this->getCarModelPrice($confSession->id_model);
+        }
+
+        // 2. Añadir el sobrecoste del color.
+        $color = null;
+        if ($confSession->id_color) {
+            $color = $this->colorModel->find($confSession->id_color);
+            if ($color) {
+                $total += (float)$color->price_increase;
+            }
+        }
+        
+        // 3. Añadir el precio de los extras.
+        $extrasCollection = [];
+        if ($confSession->extras) {
+            $extraIds = explode(',', $confSession->extras);
+            if (!empty($extraIds)) {
+                $extrasCollection = $this->extraModel->findAll('id_extra', $extraIds);
+                
+                // Usamos reduce para sumar los precios de la colección.
+                $totalExtras = $extrasCollection->reduce(function ($sum, $extra) {
+                    return $sum + (float)$extra->price;
+                }, 0);
+
+                $extrasCollection = $extrasCollection->toArray(); //lo convertimos en array después de calcular la suma
+                $total += $totalExtras;
+            }
+        }
+
+        return [
+            'total' => $total,
+            'model' => $carModel ? $carModel->toArray() : null,
+            'color' => $color ? $this->_translateAndFormatColor($color) : null,
+            'extras' => $this->_translateAndFormatExtras($extrasCollection),
+        ];
+    }
+
+
+    /**
+     * Calcula el precio total para una sesión de configuración dada.
+     * Nota: ahora se usa "getPriceDetails" para mandar más información al frontend
      * @param ConfSession_Base $confSession El objeto de la sesión de configuración.
      * @return float El precio total calculado.
      */
@@ -123,12 +177,17 @@ class ConfiguratorService_Base extends Service implements ConfiguratorService
 
     // --- Helpers privados para mantener el código limpio ---
     protected function _translateAndFormatColor($color) {
-        return ['name' => $this->translate($color->name), 'price' => (float) $color->price_increase];
+        return [
+            'id_color' => ($color->id_color),
+            'name' => $this->translate($color->name), 
+            'price' => (float) $color->price_increase,
+        ];
     }
 
     protected function _translateAndFormatExtras($extras) {
         return array_map(function($extra) {
             return [
+                'id_extra' => $extra['id_extra'],
                 'name' => $this->translate($extra['name']),
                 'price' => (float) $extra['price']
             ];
@@ -222,7 +281,7 @@ class ConfiguratorService_Base extends Service implements ConfiguratorService
         // 2. Mapeamos y formateamos los datos.
         $data = $carModels->map(function ($carModel) {
             return [
-                'id' => $carModel->id_model,
+                'idKey' => $carModel->id_model, //usamos "idKey" de clave para seguir la convencion del framework frontend
                 'name' => $this->translate($carModel->name), // Aprovechamos para traducir
                 'price' => (float) $carModel->price,
                 'image' => $this->_getFirstColorImageForModel($carModel->id_model)

@@ -11,7 +11,7 @@
         <!-- Parámetro que recibirá el contenido específico de cada página -->
         <xsl:param name="page_content"/>
 
-        <html lang="{page_lang}">
+        <html lang="{page_lang}" class="{page_css_class}">
             <head>
                 <meta charset="UTF-8"/>
                 <title><xsl:value-of select="pageTitle"/> - <xsl:value-of select="brandName"/></title>
@@ -27,6 +27,16 @@
                 </style>
             </head>
             <body>
+                <div class="injected-content">
+                    <!-- 1. Iteramos sobre cada elemento 'block' dentro de 'injected_blocks' -->
+                    <xsl:for-each select="injected_blocks/injected_block">
+                    
+                        <!-- 2. Para CADA bloque, inyectamos su contenido como HTML crudo -->
+                        <xsl:value-of select="." disable-output-escaping="yes"/>
+                        
+                    </xsl:for-each>
+                </div>
+
                 <div class="app-container">
                     <!-- Columna del Menú (Sidebar) -->
                     <aside class="sidebar">
@@ -122,16 +132,40 @@
 
     <xsl:template match="data" mode="load_scripts">
         <xsl:value-of select="json_data_blocks" disable-output-escaping="yes"/>
-        <!-- 
-          Iteramos sobre cada nodo 'script' dentro del nodo 'scripts'.
-          Asumimos que el controlador nos ha pasado una estructura de datos así.
-        -->
+        
         <xsl:for-each select="scripts/script">
             <script>
-                <!-- El atributo 'src' se establece con el valor del nodo actual -->
+                <!-- 
+                Determinamos de dónde obtener la URL del script.
+                Si existe un nodo hijo <src>, lo usamos.
+                Si no, asumimos que el valor es el contenido del nodo <script> actual (retrocompatibilidad).
+                -->
                 <xsl:attribute name="src">
-                    <xsl:value-of select="."/>
+                    <xsl:choose>
+                        <xsl:when test="src">
+                            <xsl:value-of select="src"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="."/>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </xsl:attribute>
+
+                <!-- 
+                Añadimos el atributo 'type' SOLO SI existe un nodo hijo <type>.
+                -->
+                <xsl:if test="type">
+                    <xsl:attribute name="type">
+                        <xsl:value-of select="type"/>
+                    </xsl:attribute>
+                </xsl:if>
+                
+                <!-- Aquí podrías añadir más atributos opcionales como async, defer, etc. -->
+                <!-- 
+                <xsl:if test="async">
+                    <xsl:attribute name="async"/>
+                </xsl:if> 
+                -->
             </script>
         </xsl:for-each>
     </xsl:template>

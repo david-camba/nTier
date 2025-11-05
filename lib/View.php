@@ -1,7 +1,10 @@
 <?php
+
+use function PHPUnit\Framework\isNull;
+
 class View
 {
-    private App $app;
+    private LayerResolver $layerResolver;
     private string $viewName;     // La ruta a renderizar
     private $data = [];    // Los datos que le pasará el controlador
     private $compiledCache = []; // Save compiled views
@@ -10,10 +13,10 @@ class View
     /**
      * El constructor recibe la ruta a la plantilla que debe usar.
      */
-    public function __construct(string $viewName)
+    public function __construct(string $viewName, LayerResolver $layerResolver)
     {
         $this->viewName = $viewName;
-        $this->app = App::getInstance();
+        $this->layerResolver = $layerResolver;
     }
 
     /**
@@ -98,11 +101,11 @@ class View
      */
     public function render($userLayer=null) //añadir aquí el user level override para buscar a partir de X vista sino se queire usar lo de user
     {
-        $user = $this->app->getContext("user");
+        $user = App::getInstance()->getContext("user");
 
         $userToken = $user ? $user->token : "noLog";
 
-        $basePath = realpath($this->app->rootPath . '/cache'); 
+        $basePath = realpath(App::getInstance()->rootPath . '/cache'); 
         $userFolder = $basePath . '/' . $userToken; 
         $viewFolder = $userFolder . '/views' . '/' . $this->viewName; 
         $finalXslFile = $viewFolder . '/' . $this->viewName . '.xsl';
@@ -122,7 +125,7 @@ class View
         }
 
         // 1. Buscar la vista más específica que exista y no cargarla
-        $viewFileInfo = $this->app->findFiles('view', $this->viewName, $userLayer, false, false);
+        $viewFileInfo = $this->layerResolver->findFiles('view', $this->viewName, $userLayer, false, false);
         if (!$viewFileInfo) {
             throw new Exception("Plantilla de vista no encontrada: {$this->viewName}");
         }
@@ -198,7 +201,7 @@ class View
         $importedTemplates = $this->findImported($content);
 
         foreach ($importedTemplates as $marker => $viewNameToFind) {
-            $importedInfo = $this->app->findFiles('view', $viewNameToFind, null, false, false);
+            $importedInfo = $this->layerResolver->findFiles('view', $viewNameToFind, null, false, false);
             if ($importedInfo) {
                 // ANTES de reemplazar, compilamos la dependencia.
                 $this->processTemplate($importedInfo);
@@ -232,7 +235,7 @@ class View
         // Le pedimos a la App que busque la MISMA vista, pero limitando la
         // búsqueda a un nivel máximo igual al del padre. findFile se encargará
         // de ignorar la capa actual y las superiores, devolviendo la primera que encuentre.
-        return $this->app->findFiles('view', $viewName, $maxParentLevel, false, false);
+        return $this->layerResolver->findFiles('view', $viewName, $maxParentLevel, false, false);
     }
         /**
      * Busca y extrae todos los marcadores de importación de tipo [VIEW_PATH:...]
@@ -365,6 +368,9 @@ class View
                         if (is_array($item)) {
                             $this->buildXmlNodes($xml, $element, $item);
                         } else {
+                            if (is_null($item) || !is_string($item)) {
+                            $aquiEstoy = true;
+                            }
                             $element->appendChild($xml->createTextNode($item));
                         }
                         
