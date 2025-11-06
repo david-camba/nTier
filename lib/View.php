@@ -280,7 +280,7 @@ class View
         // Asociar claves a nombres temporales, dejando el último como nombre de vista
         foreach ($compiledCache as $key => $_) {
             $keyToVar[$key] = ($index === count($compiledCache) - 1)
-                ? "{$viewName}.xsl"
+                ? "{$viewName}.xsl" //la última vista en entrar en el caché compilado es la vista especifíca que necesitamos para este usuario (la recursiva funciona como una pila LIFO: list-in, first-out)
                 : "v{$index}.xsl";
             $index++;
         }

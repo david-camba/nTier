@@ -44,9 +44,9 @@ return [
 
     // Horizontal Layers map, find the specific controller or controller method for the user role
     'user_roles' => [
-    3 => 'Admin',
-    2 => 'Manager',
-    1 => 'Seller',
+        3 => 'Admin',
+        2 => 'Manager',
+        1 => 'Seller',
     ],
 
     // Helper methods used for dynamic parent calls, skipped when resolving the real calling method

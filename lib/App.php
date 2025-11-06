@@ -74,7 +74,7 @@ class App
             $finalRouteInfo = $this->layerResolver->buildService('AuthService')->authenticateRequest($requestedRouteInfo);
 
             //detect if is JSON request
-            /*if (!empty($requestedRouteInfo['api_route'])) {                
+            /*if (!empty($requestedRouteInfo['json_route'])) {                
                 $this->isApiRoute = true;
             }*/
             

@@ -75,14 +75,14 @@ class Router
                 if (preg_match($regex, $path, $matches)) {
                     // Eliminamos la coincidencia completa para quedarnos solo con los parámetros.
                     array_shift($matches);
-                    $apiRoute = $routeInfo['api_route'] ?? false;
+                    $apiRoute = $routeInfo['json_route'] ?? false;
                     // Devolvemos la información de la ruta MVC, añadiendo los parámetros y el tipo.
                     return [
                         'type'       => 'mvc_action',
                         'controller' => $routeInfo['controller'],
                         'action'     => $routeInfo['action'],
                         'params'     => $matches,
-                        'api_route'  => $apiRoute
+                        'json_route'  => $apiRoute
                     ];
                 }
             }

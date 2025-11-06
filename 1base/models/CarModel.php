@@ -1,8 +1,4 @@
 <?php
-// EN: 3audi/models/Model.php
-
-
-
 /**
  * Representa la tabla 'models' del catálogo de productos.
  * Este modelo es específico de la capa Audi.

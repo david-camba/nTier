@@ -26,18 +26,18 @@ return [
         '/api/employees-report' => [
             'controller' => 'DashboardController', 
             'action' => 'showEmployeesReportAPI', 
-            'api_route' => true
+            'json_route' => true
         ],
         '/api/report-emissions' => [
             'controller' => 'EmissionsController', 
             'action' => 'showReportEmissions', 
-            'api_route' => true
+            'json_route' => true
         ],
 
         '/app/spa-emissions' => [
             'controller' => 'EmissionsSPAController', 
             'action' => 'show', 
-            'api_route' => true
+            'json_route' => true
         ],
 
         // Una ruta explícita para la página de login.
@@ -64,24 +64,24 @@ return [
         '/api/configurator/models' => [ 
             'controller' => 'ConfiguratorController', 
             'action' => 'getModelsAPI', 
-            'api_route'  => true 
+            'json_route'  => true 
         ],
         '/api/configurator/session/(\d+)/colors' => [
             'controller' => 'ConfiguratorController',
             'action' => 'getColorsForSessionAPI', 
-            'api_route'  => true
+            'json_route'  => true
         ],
 
         '/api/configurator/session/(\d+)/extras' => [
             'controller' => 'ConfiguratorController',
             'action'     => 'getExtrasForSessionAPI', // Nuevo nombre de método
-            'api_route'  => true
+            'json_route'  => true
         ],
 
         '/api/configurator/session/(\d+)/summary' => [
             'controller' => 'ConfiguratorController',
             'action'     => 'getSummaryForSessionAPI',
-            'api_route'  => true
+            'json_route'  => true
         ],        
     ],
 
@@ -91,7 +91,7 @@ return [
         '/api/login' => [
             'controller' => 'AuthController', 
             'action' => 'doLoginAPI', 
-            'api_route' => true
+            'json_route' => true
         ],
     ],
 
@@ -99,7 +99,7 @@ return [
         '/api/configurator/session/(\d+)/reset-to-step1' => [
             'controller' => 'ConfiguratorController',
             'action'     => 'resetToStep1',
-            'api_route'  => true
+            'json_route'  => true
         ],
     ],
 
@@ -107,18 +107,18 @@ return [
         '/api/configurator/session/(\d+)/model' => [
             'controller' => 'ConfiguratorController',
             'action' => 'saveModelsAPI',
-            'api_route'  => true
+            'json_route'  => true
         ],
 
         '/api/configurator/session/(\d+)/colors' => [
             'controller' => 'ConfiguratorController',
             'action'     => 'saveColorsAPI' ,
-            'api_route'  => true
+            'json_route'  => true
         ],
         '/api/configurator/session/(\d+)/extras' => [
             'controller' => 'ConfiguratorController',
             'action'     => 'saveExtrasAPI',
-            'api_route'  => true
+            'json_route'  => true
         ],
     ],
 
