@@ -143,7 +143,7 @@ return [
     
     <br/><br/>• <b>N-Tier</b>: MVCS Backend Framework con arquitectura híbrida de capas (vertical/horizontal) con motor de inyección de dependencias y soporte nativo para testing de integración.
     
-    <br/><br/>• <b>LifeTree</b>: Framework Frontend declarativo que define la UI como un Árbol Dinámico bajo una filosofía de composición propia: el modelo 'Actor, Escenario, Director'. Actualizaciones quirúrgicas del DOM sin transpilación.",
+    <br/><br/>• <b>LifeTree</b>: Framework Frontend declarativo que define la UI como un Árbol Dinámico bajo una filosofía de composición propia: el modelo 'Director, Escenario, Actor'. Actualizaciones quirúrgicas del DOM sin transpilación.",
 
     'clients_error_no_session' => 'Error: La configuración no existe.',
     'clients_error_not_owner' => 'Error: Esta configuración no te pertenece. No puedes asignarla.',
