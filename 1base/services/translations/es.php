@@ -3,7 +3,7 @@
 
 return [
     // --- Login Page ---
-    'login_page_title' => 'Portal de Acceso',
+    'login_page_title' => 'N-Tier & LifeTree – Demo',
     'login_header_brand' => 'Bienvenido a %s', // %s se reemplazará por el nombre de la marca
     'login_form_username_placeholder' => 'Nombre de Usuario',
     'login_form_password_placeholder' => 'Contraseña',
@@ -71,7 +71,7 @@ return [
     'role_S' => 'Vendedor/a',
 
     // --- Configurator Page ---
-    'configurator_title' => 'Configurador de Pedido',
+    'configurator_title' => 'LifeTree, el Árbol Dinámico',
     'configurator_templates_label' => 'Cargar plantilla:',
     'configurator_templates_default_option' => 'Seleccionar una plantilla',
     'configurator_no_templates_message' => 'No tienes plantillas guardadas.',

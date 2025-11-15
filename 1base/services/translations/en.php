@@ -3,7 +3,7 @@
 
 return [
     // --- Login Page ---
-    'login_page_title' => 'Access Portal',
+    'login_page_title' => 'N-Tier & LifeTree – Demo',
     'login_header_brand' => 'Welcome to %s', // %s will be replaced by the brand name
     'login_form_username_placeholder' => 'Username',
     'login_form_password_placeholder' => 'Password',
@@ -70,7 +70,7 @@ return [
     'role_S' => 'Seller',
 
     // --- Configurator Page ---
-    'configurator_title' => 'Order Configurator',
+    'configurator_title' => 'LifeTree, the Dynamic Tree',
     'configurator_templates_label' => 'Load template:',
     'configurator_templates_default_option' => 'Select a template',
     'configurator_no_templates_message' => 'You have no saved templates.',
