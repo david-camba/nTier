@@ -3,8 +3,8 @@
 
 > 🌳 Este backend framework funciona junto con **LifeTree**: mi framework de frontend, disponible en [GitHub](https://github.com/david-camba/lifetree).
 
-> 🚀 Demo en Vivo Disponible: [Acceder a la Demo 🌐 ](https://david.camba.com) 
-> *Desplegada con Docker en Google Cloud*
+> 🚀 Demo en Vivo Disponible: [Acceder a la Demo🌐](https://david.camba.com)   
+> *Optimizada para escritorio | Desplegada con Docker en Google Cloud*
 
 ## Tabla de contenidos
 
